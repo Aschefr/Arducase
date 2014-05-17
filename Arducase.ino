@@ -92,7 +92,7 @@ void init_thermals(){
 
 // _________________________________ Functions pour sondes thermiques _____________________________________________
 void read_and_convert_termal_sensor(struct Termal_sensor sensor){
-
+  //Serial.begin(9600);
   sensor.raw = analogRead(sensor.pin);
 
   double Temp;
@@ -106,10 +106,18 @@ void read_and_convert_termal_sensor(struct Termal_sensor sensor){
 
   Temp = Temp + sensor.offset; // on applique l'offset
 
-  if (sensor.val == -300.00)
+  if (sensor.val < -299.00) {
+    Serial.println("sensor.val :");
+    Serial.println(sensor.val);
     sensor.val = Temp; // on initialise sensor.val pour la première fois !
-  else if (Temp + 0.25 > sensor.val || Temp - 0.25 < sensor.val) // si on s'éloigne de plus de 0.25 de la dernière valeur
+    Serial.println("le premier :");
+    Serial.println(Temp);
+  }
+  else if (Temp + 0.25 > sensor.val || Temp - 0.25 < sensor.val) {// si on s'éloigne de plus de 0.25 de la dernière valeur
     sensor.val = Temp; // alors on change la valeur
+    Serial.println("le second :");
+    Serial.println(Temp);
+  }
 }
 
 
