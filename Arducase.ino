@@ -11,62 +11,87 @@ LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 // _______________________________________ Library __________________________________________________
 
 
-struct TERMAL_SENSOR {
+typedef struct Termal_sensor {
   float offset; // offset pour convertion
-  int raw = -1; // valeur brute lue
+  int raw; // valeur brute lue
   int pin; // on c'est branché
-  float val = -300.00; // valeur traduite en celcius
-  int seuil_haut = 35;
-  int seuil_bas = 25;
-};
+  float val; // valeur traduite en celcius
+  int seuil_haut;
+  int seuil_bas;
+} Termal_sensor;
 
 
 
 // ----------------------------------------------------------------------------- Sonde de températures :
-TERMAL_SENSOR temp_wtr_in_pc; //température eau entrée pc
-TERMAL_SENSOR temp_wtr_out_pc; //température eau sortie pc
-TERMAL_SENSOR temp_cpu; //température au contact du CPU
-TERMAL_SENSOR temp_gpu; //température au contact du GPU
-TERMAL_SENSOR temp_wtr_out_pcrad; //température eau sortie du radiateur PC
-TERMAL_SENSOR temp_pc_case; //température à l'intérieur du PC
-TERMAL_SENSOR temp_tec_hot; //température du waterblock peltier face chaude
-TERMAL_SENSOR temp_tec_cold; //température du waterblock peltier face froide
-TERMAL_SENSOR temp_wtr_tec_hot; //température eau boucle peltier chaud
-TERMAL_SENSOR temp_wc_case; //température dans la watercase
+Termal_sensor temp_wtr_in_pc; //température eau entrée pc
+Termal_sensor temp_wtr_out_pc; //température eau sortie pc
+Termal_sensor temp_cpu; //température au contact du CPU
+Termal_sensor temp_gpu; //température au contact du GPU
+Termal_sensor temp_wtr_out_pcrad; //température eau sortie du radiateur PC
+Termal_sensor temp_pc_case; //température à l'intérieur du PC
+Termal_sensor temp_tec_hot; //température du waterblock peltier face chaude
+Termal_sensor temp_tec_cold; //température du waterblock peltier face froide
+Termal_sensor temp_wtr_tec_hot; //température eau boucle peltier chaud
+Termal_sensor temp_wc_case; //température dans la watercase
 
-// _________________________________ Gestion des Pins d'entrées de sondes thermiques _____________________________________________
-temp_wtr_in_pc.pin = 1;
-temp_wtr_out_pc.pin = 2;
-temp_cpu.pin = 3;
-temp_gpu.pin = 4;
-temp_wtr_out_pcrad.pin = 5;
-temp_pc_case.pin = 6;
-temp_tec_hot.pin = 7;
-temp_tec_cold.pin = 8;
-temp_wtr_tec_hot.pin = 9;
-temp_wc_case.pin = 10;
 
-// _________________________________ Gestion des Offset de sondes thermiques _____________________________________________
-temp_wtr_in_pc.offset = 0;
-temp_wtr_out_pc.offset = -5.00;
-temp_cpu.offset = 0;
-temp_gpu.offset = 0;
-temp_wtr_out_pcrad.offset = 0;
-temp_pc_case.offset = 0;
-temp_tec_hot.offset = 0;
-temp_tec_cold.offset = 0;
-temp_wtr_tec_hot.offset = 0;
-temp_wc_case.offset = 0;
+void init_thermals(){
 
-// _________________________________ Gestion des Seuils de sondes thermiques _____________________________________________
+  // default values
+  Termal_sensor temp_default;
+  temp_default.raw = -1;
+  temp_default.val = -300.00;
+  temp_default.seuil_haut = 35;
+  temp_default.seuil_bas = 25;
 
-// exemple d'overwrite des seuils par defaut (par defaut : haut = 35, bas = 25)
-//temp_wtr_tec_hot.seuil_haut = 45;
-//temp_wtr_tec_hot.seuil_bas = 20;
+  // DAMM C LANGUAGE FUCK YOU !!!
+  temp_wtr_in_pc = temp_default;
+  temp_wtr_out_pc = temp_default;
+  temp_cpu = temp_default;
+  temp_gpu = temp_default;
+  temp_wtr_out_pcrad = temp_default;
+  temp_pc_case = temp_default;
+  temp_tec_hot = temp_default;
+  temp_tec_cold = temp_default;
+  temp_wtr_tec_hot = temp_default;
+  temp_wc_case = temp_default;
+  // END DAMM C LANGUAGE FUCK YOU !!
+
+  // _________________________________ Gestion des Pins d'entrées de sondes thermiques _____________________________________________
+  temp_wtr_in_pc.pin = 1;
+  temp_wtr_out_pc.pin = 2;
+  temp_cpu.pin = 3;
+  temp_gpu.pin = 4;
+  temp_wtr_out_pcrad.pin = 5;
+  temp_pc_case.pin = 6;
+  temp_tec_hot.pin = 7;
+  temp_tec_cold.pin = 8;
+  temp_wtr_tec_hot.pin = 9;
+  temp_wc_case.pin = 10;
+
+  // _________________________________ Gestion des Offset de sondes thermiques _____________________________________________
+  temp_wtr_in_pc.offset = 0;
+  temp_wtr_out_pc.offset = -5.00;
+  temp_cpu.offset = 0;
+  temp_gpu.offset = 0;
+  temp_wtr_out_pcrad.offset = 0;
+  temp_pc_case.offset = 0;
+  temp_tec_hot.offset = 0;
+  temp_tec_cold.offset = 0;
+  temp_wtr_tec_hot.offset = 0;
+  temp_wc_case.offset = 0;
+
+  // _________________________________ Gestion des Seuils de sondes thermiques _____________________________________________
+
+  // exemple d'overwrite des seuils par defaut (par defaut : haut = 35, bas = 25)
+  //temp_wtr_tec_hot.seuil_haut = 45;
+  //temp_wtr_tec_hot.seuil_bas = 20;
+
+  thermals_save();
+}
 
 // _________________________________ Functions pour sondes thermiques _____________________________________________
-
-void read_and_convert_termal_sensor(TERMAL_SENSOR sensor){
+void read_and_convert_termal_sensor(struct Termal_sensor sensor){
 
   sensor.raw = analogRead(sensor.pin);
 
@@ -232,7 +257,8 @@ void setup (void)
   TCCR3B |= prescalerVal; //OR the value in TCCR0B with binary number "00000001"
   
   
-  temps_save();
+  init_thermals();
+
 }
 // _______________________________________ Setup _______________________________________
 
@@ -362,7 +388,7 @@ void set_led (void) {
 
 
 
-void temps_save (void) { //Enregistrement température en Celsius dans chaque variables
+void thermals_save (void) { //Enregistrement température en Celsius dans chaque variables
   read_and_convert_termal_sensor( temp_wtr_in_pc );
   read_and_convert_termal_sensor( temp_wtr_out_pc );
   read_and_convert_termal_sensor( temp_cpu );
@@ -409,9 +435,9 @@ void lcd_temp_draw (void) {
         case 0: lcd.clear(); 
                 screens=0; break;
         case 1: lcd_set("wtr_in_pc :", temp_wtr_in_pc.val);
-                temps_save(); break; 
+                thermals_save(); break; 
         case 2: lcd_set("wtr_out_pc :", temp_wtr_out_pc.val);
-                temps_save(); 
+                thermals_save(); 
                 lcd.setCursor(6, 1);
                 lcd.print("vent=");
                 //lcd.setCursor(6+length("vent="), 1);
@@ -419,21 +445,21 @@ void lcd_temp_draw (void) {
                 lcd.print(outputValue);
                 break;
         case 3: lcd_set("cpu :", temp_cpu.val);
-                temps_save(); break; 
+                thermals_save(); break; 
         case 4: lcd_set("gpup :", temp_gpu.val);
-                temps_save(); break;
+                thermals_save(); break;
         case 5: lcd_set("wtr_out_pcrad :", temp_wtr_out_pcrad.val);
-                temps_save(); break; 
+                thermals_save(); break; 
         case 6: lcd_set("pc_case :", temp_pc_case.val);
-                temps_save(); break; 
+                thermals_save(); break; 
         case 7: lcd_set("tec_hot :", temp_tec_hot.val);
-                temps_save(); break; 
+                thermals_save(); break; 
         case 8: lcd_set("tec_cold :", temp_tec_cold.val);
-                temps_save(); break;
+                thermals_save(); break;
         case 9: lcd_set("wtr_tec_hot :", temp_wtr_tec_hot.val);
-                temps_save(); break; 
+                thermals_save(); break; 
         case 10: lcd_set("wc_case :", temp_wc_case.val);
-                 temps_save(); break;
+                 thermals_save(); break;
         default: screens=0; 
                  lcd.clear();
                  delay(200);
@@ -443,12 +469,12 @@ void lcd_temp_draw (void) {
   }
   
   if (digitalRead(btn_refrsh) == HIGH) {
-    temps_save();
+    thermals_save();
         switch(screens) {
         case 1: lcd_set("wtr_in_pc :", temp_wtr_in_pc.val);
-                temps_save(); break; 
+                thermals_save(); break; 
         case 2: lcd_set("wtr_out_pc :", temp_wtr_out_pc.val);
-                temps_save();
+                thermals_save();
                 lcd.setCursor(6, 1);
                 lcd.print("vent=");
                 //lcd.setCursor(6+length("vent="), 1);
@@ -456,21 +482,21 @@ void lcd_temp_draw (void) {
                 lcd.print(outputValue);
                 break;
         case 3: lcd_set("cpu :", temp_cpu.val);
-                temps_save(); break; 
+                thermals_save(); break; 
         case 4: lcd_set("gpup :", temp_gpu.val);
-                temps_save(); break;
+                thermals_save(); break;
         case 5: lcd_set("wtr_out_pcrad :", temp_wtr_out_pcrad.val);
-                temps_save(); break; 
+                thermals_save(); break; 
         case 6: lcd_set("pc_case :", temp_pc_case.val);
-                temps_save(); break; 
+                thermals_save(); break; 
         case 7: lcd_set("tec_hot :", temp_tec_hot.val);
-                temps_save(); break; 
+                thermals_save(); break; 
         case 8: lcd_set("tec_cold :", temp_tec_cold.val);
-                temps_save(); break;
+                thermals_save(); break;
         case 9: lcd_set("wtr_tec_hot :", temp_wtr_tec_hot.val);
-                temps_save(); break; 
+                thermals_save(); break; 
         case 10: lcd_set("wc_case :", temp_wc_case.val);
-                 temps_save(); break;
+                 thermals_save(); break;
         default: break;
     }
   }
@@ -511,8 +537,8 @@ void regulation () {
   int avg = (selected_mode*255)/100;
   Serial.print("avg=");Serial.println(avg);
   
-  if (temp_wtr_out_pc.val > seuilb_wtr_out_pc) {
-    outputValue = map(temp_wtr_out_pc.val, seuilb_wtr_out_pc, seuilh_wtr_out_pc, 0, avg);
+  if (temp_wtr_out_pc.val > temp_wtr_out_pc.seuil_bas) {
+    outputValue = map(temp_wtr_out_pc.val, temp_wtr_out_pc.seuil_bas, temp_wtr_out_pc.seuil_haut, 0, avg);
     analogWrite(vent_grp_rad, outputValue); 
   }
   else {
@@ -536,7 +562,7 @@ void regulation () {
 void loop (void) {
   set_led();
   lcd_temp_draw();
-  temps_save();
+  thermals_save();
   regulation();
 
 }
