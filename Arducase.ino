@@ -256,7 +256,6 @@ setup (void)
   pinMode(led_normal, OUTPUT); 
   pinMode(led_heavy, OUTPUT); 
   pinMode(led_extreme, OUTPUT);
-  attachInterrupt(btn_next, test, CHANGE);
 }
 // _______________________________________ Setup _______________________________________
 
@@ -488,7 +487,6 @@ lcd_set (char *text, double variable)
 
 int screens=0;
 
-volatile int state = LOW;
 
 /*
  * 
@@ -499,8 +497,8 @@ loop (void)
   set_led();
   temps_save();
   
-  Serial.println(state);
-  if (state) {
+
+  if (digitalRead(btn_next) == HIGH) {
     Serial.println(screens);
     screens++;
     switch(screens) {
@@ -560,10 +558,7 @@ loop (void)
   }
 }
 
-void test() {
-  state = !state; 
-  Serial.println(state);
-}
+
 
 
 
