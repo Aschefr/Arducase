@@ -66,7 +66,7 @@ LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 
 
 // _________________________________ Gestion des Offset _____________________________________________
-const int offset_wtr_in_pc = -1.8; //Offset sonde eau entrée pc
+const int offset_wtr_in_pc = 0; //Offset sonde eau entrée pc
 const int offset_wtr_out_pc = 0.00; //Offset sondee eau sortie pc
 const int offset_cpu = 0.00; //Offset sonde au contact du CPU
 const int offset_gpu = 0.00; //Offset sonde au contact du GPU
@@ -387,10 +387,12 @@ double Thermister_read(int RawADC) {
   double Temp;
   // See http://en.wikipedia.org/wiki/Thermistor for explanation of formula
   Temp = log(((10240000/RawADC) - 10000));
-  Temp = 1 / (0.001129148 + (0.000234125 * Temp) + (0.0000000876741 * Temp * Temp * Temp));
-  Temp = Temp - 273.15;           // Convert Kelvin to Celcius
-  return Temp;
   Serial.println(Temp);
+  Temp = 1 / (0.001129148 + (0.000234125 * Temp) + (0.0000000876741 * Temp * Temp * Temp));
+  Serial.println(Temp);
+  Temp = Temp - 273.15;           // Convert Kelvin to Celcius
+  Serial.println(Temp);
+  return Temp;
 }
 
 //Déclaration des variable pour lecture température
@@ -409,41 +411,66 @@ double wc_case;
 void
 temps_save (void) { //Enregistrement température en Celsius dans chaque variables
 
- double wtr_in_pc = Thermister_read(temp_wtr_in_pc); //Enregistrement
- wtr_in_pc = wtr_in_pc + offset_wtr_in_pc; //Application de l'offset
+ wtr_in_pc = Thermister_read(analogRead(temp_wtr_in_pc)); //Enregistrement
+ wtr_in_pc = arrondie(wtr_in_pc + offset_wtr_in_pc); //Application de l'offset
  
- wtr_out_pc = Thermister_read(temp_wtr_out_pc);
+ wtr_out_pc = Thermister_read(analogRead(temp_wtr_out_pc));
  wtr_out_pc = wtr_out_pc + offset_wtr_out_pc;
  
- cpu = Thermister_read(temp_cpu);
+ cpu = Thermister_read(analogRead(temp_cpu));
  cpu = cpu + offset_cpu;
  
- gpu = Thermister_read(temp_gpu);
+ gpu = Thermister_read(analogRead(temp_gpu));
  gpu = gpu + offset_gpu;
  
- wtr_out_pcrad = Thermister_read(temp_wtr_out_pcrad);
+ wtr_out_pcrad = Thermister_read(analogRead(temp_wtr_out_pcrad));
  wtr_out_pcrad = wtr_out_pcrad + offset_wtr_out_pcrad;
  
- pc_case = Thermister_read(temp_pc_case);
+ pc_case = Thermister_read(analogRead(temp_pc_case));
  pc_case = pc_case + offset_pc_case;
  
- tec_hot = Thermister_read(temp_tec_hot);
+ tec_hot = Thermister_read(analogRead(temp_tec_hot));
  tec_hot = tec_hot + offset_tec_hot;
  
- tec_cold = Thermister_read(temp_tec_cold);
+ tec_cold = Thermister_read(analogRead(temp_tec_cold));
  tec_cold = tec_cold + offset_tec_cold;
  
- wtr_tec_hot = Thermister_read(temp_wtr_tec_hot);
+ wtr_tec_hot = Thermister_read(analogRead(temp_wtr_tec_hot));
  wtr_tec_hot = wtr_tec_hot + offset_wtr_tec_hot;
  
- wc_case = Thermister_read(temp_wc_case);
+ wc_case = Thermister_read(analogRead(temp_wc_case));
  wc_case = wc_case + offset_wc_case;
 
 }
 // _______________________ Lecture sonde et convertion en C° ____________________________
 
 
-
+/* this piece of code is inspired by:
+ * http://fr.openclassrooms.com/forum/sujet/arrondir-a-0-5-pres-96734#.U3cacSiGV8s
+ */
+double
+arrondie ( double temp) 
+{
+  int a = (int) temp;
+  double dif = temp - (double) a;
+  
+  if (dif<0.25)
+    temp = (double) a;
+    
+  else if ((dif>0.25) && (dif<0.5))
+    temp = (double) a + 0.25;
+    
+  else if ((dif>0.5) && (dif<0.75))
+    temp = (double) a + 0.5;
+    
+  else if ((dif>0.75) && (dif<1))
+    temp = (double) a + 0.75;
+   
+   else 
+     temp = (double)a +1;
+     
+   return temp;
+}
 
 
 
@@ -486,7 +513,7 @@ lcd_set (char *text, double variable)
 }
 
 int screens=0;
-
+int yazop = 0;
 
 /*
  * 
@@ -495,10 +522,12 @@ void
 loop (void)
 {
   set_led();
-  temps_save();
+  //temps_save();
   
+  if (digitalRead(btn_next) == HIGH)
+    yazop = 1;
 
-  if (digitalRead(btn_next) == HIGH) {
+  if ( digitalRead(btn_next)==LOW && yazop==1 ) {
     Serial.println(screens);
     screens++;
     switch(screens) {
@@ -529,7 +558,9 @@ loop (void)
                  delay(200);
                  break;
     }
+     yazop=0;
   }
+  
   if (digitalRead(btn_prev) == HIGH) {
     temps_save();
         switch(screens) {
@@ -555,6 +586,9 @@ loop (void)
                  temps_save(); break;
         default: break;
     }
+  }
+  else {
+     // code low
   }
 }
 
