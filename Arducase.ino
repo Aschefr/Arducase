@@ -21,7 +21,7 @@ LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 
 // _________________________________ Gestion des Offset _____________________________________________
 const int offset_wtr_in_pc = 0; //Offset sonde eau entrée pc
-const int offset_wtr_out_pc = -5.00; //Offset sondee eau sortie pc
+const int offset_wtr_out_pc = -0.50; //Offset sondee eau sortie pc
 const int offset_cpu = 0.00; //Offset sonde au contact du CPU
 const int offset_gpu = 0.00; //Offset sonde au contact du GPU
 const int offset_wtr_out_pcrad = 0.00; //Offset sonde eau sortie du radiateur PC
@@ -51,8 +51,8 @@ const int mode_extreme = 100; //En mode Extreme, pourcentage de marche ventilate
 const int seuilh_wtr_in_pc = 35; //seuil haut température eau entrée pc
 const int seuilb_wtr_in_pc = 25; //seuil bas température eau entrée pc
 
-const double seuilh_wtr_out_pc = 30; //seuil haut température eau sortie pc
-const double seuilb_wtr_out_pc = 25; //seuil bas température eau sortie pc
+const double seuilh_wtr_out_pc = 25; //seuil haut température eau sortie pc
+const double seuilb_wtr_out_pc = 20; //seuil bas température eau sortie pc
 
 const int seuilh_cpu = 35; //seuil haut température au contact du CPU
 const int seuilb_cpu = 25; //seuil bas température au contact du CPU
