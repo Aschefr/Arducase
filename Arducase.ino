@@ -1,49 +1,3 @@
-// via gestion chaine de caractères
-// "$btn_silent:$led_silent:0||1"
-// "$btn_normal:$led_normal:0||1"
-// "$btn_heavy:$led_heavy:0||1"
-// "$btn_extreme:$led_extreme:0||1"
-// 
-// if 
-
-// led_silent = 1 alors led_normal = led_heavy = led_extreme = 0
-// led_normal = 1 alors led_silent = led_heavy = led_extreme = 0
-// led_heavy = 1 alors led_silent = led_normal = led_extreme = 0
-// led_extreme = 1 alors led_silent = led_normal = led_heavy = 0
-// btn_silent => led_silent
-// btn_normal => led_normal
-// btn_heavy => led_heavy
-// btn_extreme => led_extreme
-
-
-// 0x3 ==> 0000 à 1111 => 0001 0010 0100 1000
-// LSB => led_silent
-// MSB => led_extreme
-
-//int table_btn_silent[4] = {23, 25, 27, 29};
-//int table_led[10]={22, 24, 26, 28, 30, 32, 34, 36, 38, 40};
-
-// table[1] => 24
-// table[2] => 26
-// Serial.println(table[1]);
-
-// int i = 0;
-// for (i=0; i<10 ; i++)
-//    Serial.println(table[i]);
-//
-
-//void 
-//set_led (void) {
-//    int i = 0;
-//    for ( i=0 ; i<4 ; i++ ) {
-//      digitalWrite(led_silent, i);
-//      digitalWrite(led_normal, i);
-//      digitalWrite(led_heavy, i);
-//      digitalWrite(led_extreme, i);
-//      sleep(1000);
-//    }
-//}
-
 
 
 
@@ -51,9 +5,9 @@
 
 // _______________________________________ Library __________________________________________________
 #include <LiquidCrystal.h>
+//#include <string.h>
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
-
 // _______________________________________ Library __________________________________________________
 
 
@@ -67,7 +21,7 @@ LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 
 // _________________________________ Gestion des Offset _____________________________________________
 const int offset_wtr_in_pc = 0; //Offset sonde eau entrée pc
-const int offset_wtr_out_pc = 0.00; //Offset sondee eau sortie pc
+const int offset_wtr_out_pc = -5.00; //Offset sondee eau sortie pc
 const int offset_cpu = 0.00; //Offset sonde au contact du CPU
 const int offset_gpu = 0.00; //Offset sonde au contact du GPU
 const int offset_wtr_out_pcrad = 0.00; //Offset sonde eau sortie du radiateur PC
@@ -76,8 +30,6 @@ const int offset_tec_hot = 0.00; //Offset sonde du waterblock peltier face chaud
 const int offset_tec_cold = 0.00; //Offset sonde du waterblock peltier face froide
 const int offset_wtr_tec_hot = 0.00; //Offset sonde eau boucle peltier chaud
 const int offset_wc_case = 0.00; //Offset sonde dans la watercase
-
-
 // _________________________________ Gestion des Offset _____________________________________________
 
 
@@ -99,8 +51,8 @@ const int mode_extreme = 100; //En mode Extreme, pourcentage de marche ventilate
 const int seuilh_wtr_in_pc = 35; //seuil haut température eau entrée pc
 const int seuilb_wtr_in_pc = 25; //seuil bas température eau entrée pc
 
-const int seuilh_wtr_out_pc = 35; //seuil haut température eau sortie pc
-const int seuilb_wtr_out_pc = 25; //seuil bas température eau sortie pc
+const double seuilh_wtr_out_pc = 30; //seuil haut température eau sortie pc
+const double seuilb_wtr_out_pc = 25; //seuil bas température eau sortie pc
 
 const int seuilh_cpu = 35; //seuil haut température au contact du CPU
 const int seuilb_cpu = 25; //seuil bas température au contact du CPU
@@ -125,9 +77,6 @@ const int seuilb_wtr_tec_hot = 25; //seuil bas température eau boucle peltier c
 
 const int seuilh_wc_case = 35; //seuil haut température dans la watercase
 const int seuilb_wc_case = 25; //seuil bas température dans la watercase
-
-
-
 // _________________________________ Gestion des Seuils _____________________________________________
 
 
@@ -176,10 +125,10 @@ const int activ_cam4 = 50; //Sortie pour activation caméra 4
 
 // ------------------------------------------------------------------------------------ Défilement LCD :
 const int btn_next = 39; //Bouton Next LCD
-const int btn_prev = 41; //Bouton Prev LCD
+const int btn_refrsh = 41; //Bouton Refresh LCD
 
 const int led_next = 38; //Led du bouton Next
-const int led_prev = 40; //Led du bouton prev
+const int led_refrsh = 40; //Led du bouton Refresh
 
 // --------------------------------------------------------------------------------- Mode Auto ou Manu :
 const int sw_cooling_auto = 43; //Entrée switch cooling mode Auto ou Manu, Manu = 0, Auto = 1
@@ -251,11 +200,38 @@ setup (void)
   pinMode(btn_heavy, INPUT);
   pinMode(btn_extreme, INPUT);
   pinMode(btn_next, INPUT);
-  pinMode(btn_prev, INPUT);
+  pinMode(btn_refrsh, INPUT);
   pinMode(led_silent, OUTPUT); 
   pinMode(led_normal, OUTPUT); 
   pinMode(led_heavy, OUTPUT); 
   pinMode(led_extreme, OUTPUT);
+  
+  /*
+  Fréquence de la PWM :
+  TCCR0B est pour le pin 4
+  TCCR1B est pour le pin 11, 12, 13 (le pwm 13 est déconseillé, il fonctionne mal)
+  TCCR2B est pour le pin 9, 10
+  TCCR3B est pour le pin 2, 3, 5
+  TCCR4B est pour le pin 6, 7, 8
+
+  Inclure ce code dans le setup :
+  int prescalerVal = 0x07;
+  TCCRnB &= ~prescalerVal;
+  
+  prescalerVal = 1;
+  TCCRnB |= prescalerVal;
+  Remplacer le "n" de "TRCCRnB" par 0, 1, 2, 3 ou 4 selon les pin que vous souhaitez modifier.
+  Ce code set la fréquence maximal de la PWM sur les pin concernés.
+  */
+
+  //First clear all three prescaler bits:
+  int prescalerVal = 0x07; //create a variable called prescalerVal and set it equal to the binary number "00000111"
+  TCCR3B &= ~prescalerVal; //AND the value in TCCR0B with binary number "11111000"
+
+  //Now set the appropriate prescaler bits:
+  prescalerVal = 1; //set prescalerVal equal to binary number "00000001"
+  TCCR3B |= prescalerVal; //OR the value in TCCR0B with binary number "00000001"
+  
 }
 // _______________________________________ Setup _______________________________________
 
@@ -272,11 +248,11 @@ setup (void)
 
 
 
-
-
-
 // __________ Gestion mode de fonctionnement, allumage LED et inscription LCD __________
 //
+
+int selected_mode = 0; //sauvegarde du mode de fonctionnement
+
 void 
 set_led (void) { 
   if (digitalRead(btn_silent) == HIGH &&
@@ -287,6 +263,7 @@ set_led (void) {
     digitalWrite(led_normal, LOW);
     digitalWrite(led_heavy, LOW);
     digitalWrite(led_extreme, LOW);
+    selected_mode = mode_silent;
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Silent mode");
@@ -310,6 +287,7 @@ set_led (void) {
     digitalWrite(led_normal, HIGH);
     digitalWrite(led_heavy, LOW);
     digitalWrite(led_extreme, LOW);
+    selected_mode = mode_normal;
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Normal mode");
@@ -333,6 +311,7 @@ set_led (void) {
     digitalWrite(led_normal, LOW);
     digitalWrite(led_heavy, HIGH);
     digitalWrite(led_extreme, LOW);
+    selected_mode = mode_heavy;
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Heavy mode");
@@ -356,6 +335,7 @@ set_led (void) {
     digitalWrite(led_normal, LOW);
     digitalWrite(led_heavy, LOW);
     digitalWrite(led_extreme, HIGH);
+    selected_mode = mode_extreme;
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Extreme mode");
@@ -381,17 +361,21 @@ set_led (void) {
 
 
 
+
+
+
+
 // _______________________ Lecture sonde et convertion en C° ____________________________
 //Lecture sonde "Température eau entré pc
 double Thermister_read(int RawADC) {
   double Temp;
   // See http://en.wikipedia.org/wiki/Thermistor for explanation of formula
   Temp = log(((10240000/RawADC) - 10000));
-  Serial.println(Temp);
+  //Serial.println(Temp);
   Temp = 1 / (0.001129148 + (0.000234125 * Temp) + (0.0000000876741 * Temp * Temp * Temp));
-  Serial.println(Temp);
+  //Serial.println(Temp);
   Temp = Temp - 273.15;           // Convert Kelvin to Celcius
-  Serial.println(Temp);
+  //Serial.println(Temp);
   return Temp;
 }
 
@@ -415,34 +399,33 @@ temps_save (void) { //Enregistrement température en Celsius dans chaque variabl
  wtr_in_pc = arrondie(wtr_in_pc + offset_wtr_in_pc); //Application de l'offset
  
  wtr_out_pc = Thermister_read(analogRead(temp_wtr_out_pc));
- wtr_out_pc = wtr_out_pc + offset_wtr_out_pc;
+ wtr_out_pc = arrondie(wtr_out_pc + offset_wtr_out_pc);
  
  cpu = Thermister_read(analogRead(temp_cpu));
- cpu = cpu + offset_cpu;
+ cpu = cpu + arrondie(offset_cpu);
  
  gpu = Thermister_read(analogRead(temp_gpu));
- gpu = gpu + offset_gpu;
+ gpu = gpu + arrondie(offset_gpu);
  
  wtr_out_pcrad = Thermister_read(analogRead(temp_wtr_out_pcrad));
- wtr_out_pcrad = wtr_out_pcrad + offset_wtr_out_pcrad;
+ wtr_out_pcrad = arrondie(wtr_out_pcrad + offset_wtr_out_pcrad);
  
  pc_case = Thermister_read(analogRead(temp_pc_case));
- pc_case = pc_case + offset_pc_case;
+ pc_case = arrondie(pc_case + offset_pc_case);
  
  tec_hot = Thermister_read(analogRead(temp_tec_hot));
- tec_hot = tec_hot + offset_tec_hot;
+ tec_hot = arrondie(tec_hot + offset_tec_hot);
  
  tec_cold = Thermister_read(analogRead(temp_tec_cold));
- tec_cold = tec_cold + offset_tec_cold;
+ tec_cold = arrondie(tec_cold + offset_tec_cold);
  
  wtr_tec_hot = Thermister_read(analogRead(temp_wtr_tec_hot));
- wtr_tec_hot = wtr_tec_hot + offset_wtr_tec_hot;
+ wtr_tec_hot = arrondie(wtr_tec_hot + offset_wtr_tec_hot);
  
  wc_case = Thermister_read(analogRead(temp_wc_case));
- wc_case = wc_case + offset_wc_case;
+ wc_case = arrondie(wc_case + offset_wc_case);
 
 }
-// _______________________ Lecture sonde et convertion en C° ____________________________
 
 
 /* this piece of code is inspired by:
@@ -471,6 +454,7 @@ arrondie ( double temp)
      
    return temp;
 }
+// _______________________ Lecture sonde et convertion en C° ____________________________
 
 
 
@@ -480,26 +464,16 @@ arrondie ( double temp)
 
 
 
-// _______________________________________ Main Loop _______________________________________
-//  switch(variable) {
-//     case value: instruction;
-//     default: instruction;
-//  }
 
-/*long counter = 0;
-long test = 0x7fff;
 
-void
-button_stat (byte button, long time) 
-{
-  while(digitalRead(btn_next)==LOW) {
-    
-  }
-}
-*/
-/*
- *
- */
+
+
+
+
+// ________________ Affichage des temps sur LCD avec bouton Refresh ______________________
+int screens=0; //Compteur pour changer d'écran
+int yazop = 0; //Pour fonctionnement du bouton "next" au relachement
+
 void
 lcd_set (char *text, double variable)
 {
@@ -507,28 +481,21 @@ lcd_set (char *text, double variable)
    lcd.setCursor(0, 0);
    lcd.print(text);
    lcd.setCursor(0, 1);
-   //Serial.println(variable);
    lcd.print(variable);
    delay(200);
 }
 
-int screens=0;
-int yazop = 0;
+int amount_vent_rad; //affichage en % de la commande du ventilateur sortie 3
+double outputValue = 0;
 
-/*
- * 
- */
-void 
-loop (void)
-{
-  set_led();
-  //temps_save();
-  
+void
+lcd_temp_draw (void) {
+ 
   if (digitalRead(btn_next) == HIGH)
     yazop = 1;
 
   if ( digitalRead(btn_next)==LOW && yazop==1 ) {
-    Serial.println(screens);
+    //Serial.println(screens);
     screens++;
     switch(screens) {
         case 0: lcd.clear(); 
@@ -536,7 +503,13 @@ loop (void)
         case 1: lcd_set("wtr_in_pc :", wtr_in_pc); 
                 temps_save(); break; 
         case 2: lcd_set("wtr_out_pc :", wtr_out_pc); 
-                temps_save();break;
+                temps_save(); 
+                lcd.setCursor(6, 1);
+                lcd.print("vent=");
+                //lcd.setCursor(6+length("vent="), 1);
+                lcd.setCursor(6+5, 1);
+                lcd.print(outputValue);
+                break;
         case 3: lcd_set("cpu :", cpu); 
                 temps_save(); break; 
         case 4: lcd_set("gpup :", gpu); 
@@ -561,13 +534,19 @@ loop (void)
      yazop=0;
   }
   
-  if (digitalRead(btn_prev) == HIGH) {
+  if (digitalRead(btn_refrsh) == HIGH) {
     temps_save();
         switch(screens) {
         case 1: lcd_set("wtr_in_pc :", wtr_in_pc); 
                 temps_save(); break; 
         case 2: lcd_set("wtr_out_pc :", wtr_out_pc); 
-                temps_save();break;
+                temps_save();
+                lcd.setCursor(6, 1);
+                lcd.print("vent=");
+                //lcd.setCursor(6+length("vent="), 1);
+                lcd.setCursor(6+5, 1);
+                lcd.print(outputValue);
+                break;
         case 3: lcd_set("cpu :", cpu); 
                 temps_save(); break; 
         case 4: lcd_set("gpup :", gpu); 
@@ -588,10 +567,79 @@ loop (void)
     }
   }
   else {
-     // code low
+     // ignore
+  }    
+}
+// ________________ Affichage des temps sur LCD avec bouton Refresh ______________________
+
+
+
+
+//régulation selon mode de refroidissement choisi.
+/*
+Pour la sonde wtr_out_pc
+1) Lire la température en Celsius
+2) Connaitre le mode de fonctionnement (Silent, normal, heavy, extreme)
+3) Piloter entre 0 et x% (selon le monde de fonctionnement) la sortie PWM3
+Penser à ajouter une boost start à 100% pendant un delay(200) pour être certain de démarrer le ventilateur.
+4) Ecrire dans une variable nommé "amount_vent_rad" le % de commande pour affichage ultérieur sur LCD
+
+
+1) wtr_out_pc contien la valeur en degres celsius
+2) Il faut convertire cette valeur
+
+
+
+*/
+
+
+
+
+
+
+
+void
+regulation () {
+//  int buf = value % 255; //sécurité pour ne pas dépasser une certaine valeur
+  Serial.print("selected_mode=");Serial.println(selected_mode);
+  int avg = (selected_mode*255)/100;
+  Serial.print("avg=");Serial.println(avg);
+  
+  if (wtr_out_pc > seuilb_wtr_out_pc) {
+    outputValue = map(wtr_out_pc, seuilb_wtr_out_pc, seuilh_wtr_out_pc, 0, avg);
+    analogWrite(vent_grp_rad, outputValue); 
+  }
+  else {
+    analogWrite(vent_grp_rad, 0);
   }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+// _______________________________________ Main Loop _______________________________________
+void 
+loop (void)
+{
+  set_led();
+  lcd_temp_draw();
+  temps_save();
+  regulation();
+  
+  
+}
+// _______________________________________ Main Loop _______________________________________
 
 
 
