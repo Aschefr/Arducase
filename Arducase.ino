@@ -92,7 +92,7 @@ void init_thermals(){
 
 // _________________________________ Functions pour sondes thermiques _____________________________________________
 void read_and_convert_termal_sensor(struct Termal_sensor sensor){
-  //Serial.begin(9600);
+
   sensor.raw = analogRead(sensor.pin);
 
   double Temp;
@@ -106,18 +106,10 @@ void read_and_convert_termal_sensor(struct Termal_sensor sensor){
 
   Temp = Temp + sensor.offset; // on applique l'offset
 
-  if (sensor.val < -299.00) {
-    Serial.println("sensor.val :");
-    Serial.println(sensor.val);
+  if (sensor.val < -299.00)
     sensor.val = Temp; // on initialise sensor.val pour la première fois !
-    Serial.println("le premier :");
-    Serial.println(Temp);
-  }
-  else if (Temp + 0.25 > sensor.val || Temp - 0.25 < sensor.val) {// si on s'éloigne de plus de 0.25 de la dernière valeur
+  else if (Temp + 0.25 > sensor.val || Temp - 0.25 < sensor.val) // si on s'éloigne de plus de 0.25 de la dernière valeur
     sensor.val = Temp; // alors on change la valeur
-    Serial.println("le second :");
-    Serial.println(Temp);
-  }
 }
 
 
@@ -443,9 +435,8 @@ void lcd_temp_draw (void) {
         case 0: lcd.clear(); 
                 screens=0; break;
         case 1: lcd_set("wtr_in_pc :", temp_wtr_in_pc.val);
-                thermals_save(); break; 
+                break; 
         case 2: lcd_set("wtr_out_pc :", temp_wtr_out_pc.val);
-                thermals_save(); 
                 lcd.setCursor(6, 1);
                 lcd.print("vent=");
                 //lcd.setCursor(6+length("vent="), 1);
@@ -453,21 +444,21 @@ void lcd_temp_draw (void) {
                 lcd.print(outputValue);
                 break;
         case 3: lcd_set("cpu :", temp_cpu.val);
-                thermals_save(); break; 
+                break; 
         case 4: lcd_set("gpup :", temp_gpu.val);
-                thermals_save(); break;
+                break;
         case 5: lcd_set("wtr_out_pcrad :", temp_wtr_out_pcrad.val);
-                thermals_save(); break; 
+                break; 
         case 6: lcd_set("pc_case :", temp_pc_case.val);
-                thermals_save(); break; 
+                break; 
         case 7: lcd_set("tec_hot :", temp_tec_hot.val);
-                thermals_save(); break; 
+                break; 
         case 8: lcd_set("tec_cold :", temp_tec_cold.val);
-                thermals_save(); break;
+                break;
         case 9: lcd_set("wtr_tec_hot :", temp_wtr_tec_hot.val);
-                thermals_save(); break; 
+                break; 
         case 10: lcd_set("wc_case :", temp_wc_case.val);
-                 thermals_save(); break;
+                 break;
         default: screens=0; 
                  lcd.clear();
                  delay(200);
@@ -477,12 +468,10 @@ void lcd_temp_draw (void) {
   }
   
   if (digitalRead(btn_refrsh) == HIGH) {
-    thermals_save();
-        switch(screens) {
+      switch(screens) {
         case 1: lcd_set("wtr_in_pc :", temp_wtr_in_pc.val);
-                thermals_save(); break; 
+                break; 
         case 2: lcd_set("wtr_out_pc :", temp_wtr_out_pc.val);
-                thermals_save();
                 lcd.setCursor(6, 1);
                 lcd.print("vent=");
                 //lcd.setCursor(6+length("vent="), 1);
@@ -490,21 +479,21 @@ void lcd_temp_draw (void) {
                 lcd.print(outputValue);
                 break;
         case 3: lcd_set("cpu :", temp_cpu.val);
-                thermals_save(); break; 
+                break; 
         case 4: lcd_set("gpup :", temp_gpu.val);
-                thermals_save(); break;
+                break;
         case 5: lcd_set("wtr_out_pcrad :", temp_wtr_out_pcrad.val);
-                thermals_save(); break; 
+                break; 
         case 6: lcd_set("pc_case :", temp_pc_case.val);
-                thermals_save(); break; 
+                break; 
         case 7: lcd_set("tec_hot :", temp_tec_hot.val);
-                thermals_save(); break; 
+                break; 
         case 8: lcd_set("tec_cold :", temp_tec_cold.val);
-                thermals_save(); break;
+                break;
         case 9: lcd_set("wtr_tec_hot :", temp_wtr_tec_hot.val);
-                thermals_save(); break; 
+                break; 
         case 10: lcd_set("wc_case :", temp_wc_case.val);
-                 thermals_save(); break;
+                 break;
         default: break;
     }
   }
