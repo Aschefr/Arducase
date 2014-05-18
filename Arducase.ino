@@ -193,21 +193,23 @@ typedef struct Termal_sensor {
 
 
 // ----------------------------------------------------------------------------- Sonde de températures :
-Termal_sensor temp_wtr_in_pc; //température eau entrée pc
-Termal_sensor temp_wtr_out_pc; //température eau sortie pc
-Termal_sensor temp_cpu; //température au contact du CPU
-Termal_sensor temp_gpu; //température au contact du GPU
-Termal_sensor temp_wtr_out_pcrad; //température eau sortie du radiateur PC
-Termal_sensor temp_pc_case; //température à l'intérieur du PC
-Termal_sensor temp_tec_hot; //température du waterblock peltier face chaude
-Termal_sensor temp_tec_cold; //température du waterblock peltier face froide
-Termal_sensor temp_wtr_tec_hot; //température eau boucle peltier chaud
-Termal_sensor temp_wc_case; //température dans la watercase
+// ???
+Termal_sensor temp_wtr_in_pc; 
+Termal_sensor temp_wtr_out_pc; 
+Termal_sensor temp_cpu; 
+Termal_sensor temp_gpu; 
+Termal_sensor temp_wtr_out_pcrad; 
+Termal_sensor temp_pc_case; 
+Termal_sensor temp_tec_hot; 
+Termal_sensor temp_tec_cold; 
+Termal_sensor temp_wtr_tec_hot; 
+Termal_sensor temp_wc_case; 
 
 
 Termal_sensor *sondes[MAX_NB_THERMAL];
 int nb_sondes = 0;
 
+// Definition d'une structure contenant pour chaque sonde : le pin d'entrée, le nom, l'offset, le seuil bas et haut pour la régulation
 void create_thermal(struct Termal_sensor &sensor, int pin_number, char *name, int offset = 0, int seuil_bas = 25, int seuil_haut = 35){
   if (nb_sondes + 1 > MAX_NB_THERMAL){
     return;
@@ -242,25 +244,29 @@ void init_thermals(){
 
   // _________________________________ Gestion des sondes thermiques _____________________________________________
   //              variable            pin  name              offset     seuil_haut       seuil_bas
-  create_thermal(temp_wtr_in_pc      , 1 , "wtr_in_pc"      , 0);
-  create_thermal(temp_wtr_out_pc     , 2 , "wtr_out_pc"     , -2.00);
-  create_thermal(temp_cpu            , 3 , "cpu"            , 0);
-  create_thermal(temp_gpu            , 4 , "gpu"            , 0);
-  create_thermal(temp_wtr_out_pcrad  , 5 , "wtr_out_pcrad"  , 0);
-  create_thermal(temp_pc_case        , 6 , "pc_case"        , 0);
-  create_thermal(temp_tec_hot        , 7 , "tec_hot"        , 0);
-  create_thermal(temp_tec_cold       , 8 , "tec_cold"       , 0);
-  create_thermal(temp_wtr_tec_hot    , 9 , "wtr_tec_hot"    , 0);
-  create_thermal(temp_wc_case        , 10, "wc_case"        , 0);
+  create_thermal(temp_wtr_in_pc      , 1 , "wtr_in_pc"      , 0        , 30              , 25); //température eau entrée pc
+  create_thermal(temp_wtr_out_pc     , 2 , "wtr_out_pc"     , -2.00    , 35              , 25); //température eau sortie pc
+  create_thermal(temp_cpu            , 3 , "cpu"            , 0        , 40              , 30); //température au contact du CPU
+  create_thermal(temp_gpu            , 4 , "gpu"            , 0        , 60              , 45); //température au contact du GPU
+  create_thermal(temp_wtr_out_pcrad  , 5 , "wtr_out_pcrad"  , 0        , 30              , 25); //température eau sortie du radiateur PC
+  create_thermal(temp_pc_case        , 6 , "pc_case"        , 0        , 35              , 28); //température à l'intérieur du PC
+  create_thermal(temp_tec_hot        , 7 , "tec_hot"        , 0        , 35              , 30); //température du waterblock peltier face chaude
+  create_thermal(temp_tec_cold       , 8 , "tec_cold"       , 0        , 30              , 20); //température du waterblock peltier face froide
+  create_thermal(temp_wtr_tec_hot    , 9 , "wtr_tec_hot"    , 0        , 40              , 32); //température eau boucle peltier chaud
+  create_thermal(temp_wc_case        , 10, "wc_case"        , 0        , 35              , 28); //température dans la watercase
 
   // _________________________________ Association des sondes thermiques avec les ventilos _____________________________________________
   //                   sonde              ventilos
   add_ventilo_to_sonde(temp_wtr_out_pc  , vent_rad);
   add_ventilo_to_sonde(temp_cpu         , vent_rad);
-  add_ventilo_to_sonde(temp_pc_case     , vent_pc );
   add_ventilo_to_sonde(temp_gpu         , vent_rad);
+
+  add_ventilo_to_sonde(temp_pc_case     , vent_pc );
+
   add_ventilo_to_sonde(temp_tec_hot     , vent_wc );
+  add_ventilo_to_sonde(temp_tec_cold    , vent_wc );
   add_ventilo_to_sonde(temp_wtr_tec_hot , vent_wc );
+  add_ventilo_to_sonde(temp_wc_case     , vent_wc );
 
   thermals_save();
 }
@@ -501,17 +507,17 @@ void lcd_temp_draw (void) {
 
       #if DEBUG 
         Serial.print(sondes[screens - 1]->name);
-        Serial.print(' = ');
+        Serial.print(" = ");
         Serial.print(sondes[screens - 1]->val);
-        Serial.println('°C');
+        Serial.println(" °C");
 
         for (int i = 0; i < sondes[screens - 1]->nb_ventilos; ++i){
 
-          Serial.print('=> ');
+          Serial.print("=> ");
           Serial.print(sondes[screens - 1]->ventilos[i]->name);
-          Serial.print(' = ');
+          Serial.print(" = ");
           Serial.print(PWM_to_percent( sondes[screens - 1]->ventilos[i]->curent_PWM ));
-          Serial.println('%');
+          Serial.println("%");
         }
       #endif
     }
