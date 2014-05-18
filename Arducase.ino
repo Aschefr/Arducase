@@ -1,8 +1,4 @@
 
-
-
-
-
 // _______________________________________ Library __________________________________________________
 #include <LiquidCrystal.h>
 //#include <string.h>
@@ -10,7 +6,65 @@
 LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 // _______________________________________ Library __________________________________________________
 
-#define MAX_SIZE_THERMAL_NAME 15
+
+
+//============================================================================================================//
+// _______________________________________ REGULATION MODE __________________________________________________
+#define MAX_NB_MODES 5
+typedef struct Mode {
+  int pin_button;
+  int pin_led;
+  char *name;
+  int pourcentage_min; // pourcentage min des ventilateurs
+  int pourcentage_max; // pourcentage max des ventilateurs
+} Mode;
+
+
+Mode mode_silent = 20; //En mode Silent, pourcentage de marche ventilateur maximal
+Mode mode_normal = 50; //En mode Normal, pourcentage de marche ventilateur maximal
+Mode mode_heavy = 70; //En mode Heavy, pourcentage de marche ventilateur maximal
+Mode mode_extreme = 100; //En mode Extreme, pourcentage de marche ventilateur maximal
+
+
+Mode *modes[MAX_NB_MODES];
+int nb_modes = 0;
+
+
+void create_mode(struct Mode &mode, int pin_button, int pin_led, char *name, int pourcentage_min = 0, int pourcentage_max = 100){
+  if (nb_modes + 1 > MAX_NB_MODES){
+    return;
+  }
+
+  modes[nb_modes] = &mode;
+  nb_modes++;
+
+  mode.pin_button = pin_button;
+  mode.pin_led = pin_led;
+  mode.name = name;
+  mode.pourcentage_min = pourcentage_min;
+  mode.pourcentage_max = pourcentage_max;
+
+
+  pinMode(mode.pin_button, INPUT);
+  pinMode(mode.pin_led, OUTPUT);
+
+}
+
+void init_modes(){
+
+  // _________________________________ Gestion des Pins d'entrées de sondes thermiques _____________________________________________
+  //          variable        btn led    nom        min  max
+  create_mode(mode_silent   , 23, 22, "Silent"    , 0  , 20  ); //En mode Silent, pourcentage de marche ventilateur maximal
+  create_mode(mode_normal   , 25, 24, "Normal"    , 0  , 50  ); //En mode Normal, pourcentage de marche ventilateur maximal
+  create_mode(mode_heavy    , 27, 26, "Heavy"     , 40 , 70  ); //En mode Heavy, pourcentage de marche ventilateur maximal
+  create_mode(mode_extreme  , 29, 28, "Extreme"   , 70 , 100 ); //En mode Extreme, pourcentage de marche ventilateur maximal
+}
+// _______________________________________ REGULATION MODE __________________________________________________
+//============================================================================================================//
+
+
+//=============================================================================================================//
+// _______________________________________ THERMALS SENSORS __________________________________________________
 #define MAX_NB_THERMAL 10
 
 typedef struct Termal_sensor {
@@ -41,7 +95,7 @@ Termal_sensor temp_wc_case; //température dans la watercase
 Termal_sensor *sondes[MAX_NB_THERMAL];
 int nb_sondes = 0;
 
-void create_thermal(struct Termal_sensor &sensor, int pinNumer, char *name, int offset = 0, int seuil_haut = 25, int seuil_bas = 35){
+void create_thermal(struct Termal_sensor &sensor, int pin_number, char *name, int offset = 0, int seuil_haut = 25, int seuil_bas = 35){
   if (nb_sondes + 1 > MAX_NB_THERMAL){
     return;
   }
@@ -52,7 +106,7 @@ void create_thermal(struct Termal_sensor &sensor, int pinNumer, char *name, int 
   sensor.raw = -1;
   sensor.val = -300.00;
   
-  sensor.pin = pinNumer;
+  sensor.pin = pin_number;
   sensor.name = name;
   sensor.offset = offset;
   sensor.seuil_haut = seuil_haut;
@@ -100,33 +154,12 @@ void read_and_convert_termal_sensor(struct Termal_sensor &sensor){
     sensor.val = Temp; // alors on change la valeur
 }
 
-
-
-
-
-
-
-
-// _________________________________ Gestion des Seuils _____________________________________________
-const int mode_silent = 20; //En mode Silent, pourcentage de marche ventilateur maximal
-const int mode_normal = 50; //En mode Normal, pourcentage de marche ventilateur maximal
-const int mode_heavy = 70; //En mode Heavy, pourcentage de marche ventilateur maximal
-const int mode_extreme = 100; //En mode Extreme, pourcentage de marche ventilateur maximal
+// _______________________________________ THERMALS SENSORS __________________________________________________
+//=============================================================================================================//
 
 
 
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
-// ----------------------------------------------------------------Gestion et mode de refroidissement :
-const int btn_silent = 23; //Bouton mode "Silencieux"
-const int btn_normal = 25; //Bouton mode "Normale"
-const int btn_heavy = 27; //Bouton mode "Heavy"
-const int btn_extreme = 29; //Bouton mode "Extreme"
-
-const int led_silent = 22; //Led du bouton "Silencieu"
-const int led_normal = 24; //Led du bouton "Normale"
-const int led_heavy = 26; //Led du bouton "Heavy"
-const int led_extreme = 28; //Led du bouton "Extreme"
-
 const int vent_grp_pc = 2; //Groupe de ventilateur à l'intérieur du pc
 const int vent_grp_rad = 3; //Groupe de ventilateur du radiateur PC
 const int vent_grp_wc = 5; //Groupe de ventilateur de la watercase
@@ -186,18 +219,6 @@ const int vu_ech = 10; //Vumetre echauffement de l'eau après passage dans pc
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 // _______________________________________ Setup _______________________________________
 void setup (void)
 {
@@ -206,17 +227,6 @@ void setup (void)
   
   // initialize serial communication at 9600 bits per second :
   Serial.begin(9600);
-  // Rendre les boutons, les led comme entrée ou sortie :
-  pinMode(btn_silent, INPUT);
-  pinMode(btn_normal, INPUT);
-  pinMode(btn_heavy, INPUT);
-  pinMode(btn_extreme, INPUT);
-  pinMode(btn_next, INPUT);
-  pinMode(btn_refrsh, INPUT);
-  pinMode(led_silent, OUTPUT); 
-  pinMode(led_normal, OUTPUT); 
-  pinMode(led_heavy, OUTPUT); 
-  pinMode(led_extreme, OUTPUT);
   
   /*
   Fréquence de la PWM :
@@ -244,7 +254,7 @@ void setup (void)
   prescalerVal = 1; //set prescalerVal equal to binary number "00000001"
   TCCR3B |= prescalerVal; //OR the value in TCCR0B with binary number "00000001"
   
-  
+  init_modes();
   init_thermals();
 
 }
@@ -253,126 +263,46 @@ void setup (void)
 
 
 
-
-
-
-
-
-
-
-
-
-
 // __________ Gestion mode de fonctionnement, allumage LED et inscription LCD __________
 //
 
-int selected_mode = 0; //sauvegarde du mode de fonctionnement
+Mode *selected_mode = &mode_silent;
 
 void set_led (void) { 
-  if (digitalRead(btn_silent) == HIGH &&
-      digitalRead(btn_normal) == LOW &&
-      digitalRead(btn_heavy) == LOW &&
-      digitalRead(btn_extreme) == LOW ) {
-    digitalWrite(led_silent, HIGH);
-    digitalWrite(led_normal, LOW);
-    digitalWrite(led_heavy, LOW);
-    digitalWrite(led_extreme, LOW);
-    selected_mode = mode_silent;
+
+  int nb = 0;
+  Mode *temp_mode;
+  for (int i = 0; i < nb_modes; ++i){
+    if (digitalRead(mode[i]->pin_button) == HIGH){
+      nb++;
+      temp_mode = mode[i];
+    }
+  }
+
+  // si on a bien un bouton appuyé
+  if (nb == 1){
+    // on set le mode actuel
+    selected_mode = temp_mode;
+
+    // on eteinds toutes les leds
+    for (int i = 0; i < nb_modes; ++i){
+      digitalWrite(mode[i]->pin_led, LOW);
+    }
+    // on ralume le mode selectionné
+    digitalWrite(selected_mode->pin_led, HIGH);
+
+    // on affiche engage
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print("Silent mode");
+    lcd.print(selected_mode->name);
     lcd.setCursor(0, 1);
     lcd.print("Engage");
-    //int c=0;
-    //for (c=0 ; c<3;c++) {
-      //lcd.setCursor(6+c,1);
-      //lcd.print(".");
-      //delay(500);
-    //}
+
     delay(1000);
     lcd.clear();
   }
-  
-  if (digitalRead(btn_silent) == LOW &&
-      digitalRead(btn_normal) == HIGH &&
-      digitalRead(btn_heavy) == LOW &&
-      digitalRead(btn_extreme) == LOW ) {
-    digitalWrite(led_silent, LOW);
-    digitalWrite(led_normal, HIGH);
-    digitalWrite(led_heavy, LOW);
-    digitalWrite(led_extreme, LOW);
-    selected_mode = mode_normal;
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Normal mode");
-    lcd.setCursor(0, 1);
-    lcd.print("Engage");
-    //int c=0;
-    //for (c=0 ; c<3;c++) {
-      //lcd.setCursor(6+c,1);
-      //lcd.print(".");
-      //delay(500);
-    //}
-    delay(1000);
-    lcd.clear();
-  }
-  
-  if (digitalRead(btn_silent) == LOW &&
-      digitalRead(btn_normal) == LOW &&
-      digitalRead(btn_heavy) == HIGH &&
-      digitalRead(btn_extreme) == LOW ) {
-    digitalWrite(led_silent, LOW);
-    digitalWrite(led_normal, LOW);
-    digitalWrite(led_heavy, HIGH);
-    digitalWrite(led_extreme, LOW);
-    selected_mode = mode_heavy;
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Heavy mode");
-    lcd.setCursor(0, 1);
-    lcd.print("Engage");
-    //int c=0;
-    //for (c=0 ; c<3;c++) {
-      //lcd.setCursor(6+c,1);
-      //lcd.print(".");
-      //delay(500);
-    //}
-    delay(1000);
-    lcd.clear();
-  }
-  
-  if (digitalRead(btn_silent) == LOW &&
-      digitalRead(btn_normal) == LOW &&
-      digitalRead(btn_heavy) == LOW &&
-      digitalRead(btn_extreme) == HIGH ) {
-    digitalWrite(led_silent, LOW);
-    digitalWrite(led_normal, LOW);
-    digitalWrite(led_heavy, LOW);
-    digitalWrite(led_extreme, HIGH);
-    selected_mode = mode_extreme;
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Extreme mode");
-    lcd.setCursor(0, 1);
-    lcd.print("Engage");
-    //int c=0;
-    //for (c=0 ; c<3;c++) {
-      //lcd.setCursor(6+c,1);
-      //lcd.print(".");
-      //delay(500);
-    //}
-    delay(1000);
-    lcd.clear();
-  }
-  
 }
 // __________ Gestion mode de fonctionnement, allumage LED et inscription LCD __________
-
-
-
-
-
-
 
 
 
@@ -381,11 +311,6 @@ void thermals_save (void) { //Enregistrement température en Celsius dans chaque
     read_and_convert_termal_sensor(*sondes[i]);
   }
 }
-
-
-
-
-
 
 
 // ________________ Affichage des temps sur LCD avec bouton Refresh ______________________
@@ -458,14 +383,14 @@ Penser à ajouter une boost start à 100% pendant un delay(200) pour être certa
 */
 
 
-
-
-
-
 void regulation () {
 //  int buf = value % 255; //sécurité pour ne pas dépasser une certaine valeur
-  Serial.print("selected_mode=");Serial.println(selected_mode);
-  int avg = (selected_mode*255)/100;
+  Serial.print("selected_mode=");
+  Serial.println(selected_mode->name);
+  Serial.println(selected_mode->pourcentage_max);
+  //Serial.println(selected_mode->pourcentage_min);
+
+  int avg = (selected_mode->pourcentage_max * 255)/100;
   Serial.print("avg=");Serial.println(avg);
   
   if (temp_wtr_out_pc.val > temp_wtr_out_pc.seuil_bas) {
@@ -480,15 +405,6 @@ void regulation () {
 
 
 
-
-
-
-
-
-
-
-
- 
 // _______________________________________ Main Loop _______________________________________
 void loop (void) {
   set_led();
@@ -498,11 +414,5 @@ void loop (void) {
 
 }
 // _______________________________________ Main Loop _______________________________________
-
-
-
-
-
-
 
 
