@@ -499,7 +499,7 @@ void lcd_temp_draw (void) {
     if (screens > 0){
       lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val);
 
-      if (DEBUG){
+      #if DEBUG 
         Serial.print(sondes[screens - 1]->name);
         Serial.print(' = ');
         Serial.print(sondes[screens - 1]->val);
@@ -513,7 +513,7 @@ void lcd_temp_draw (void) {
           Serial.print(PWM_to_percent( sondes[screens - 1]->ventilos[i]->curent_PWM ));
           Serial.println('%');
         }
-      }
+      #endif
     }
 
   }
