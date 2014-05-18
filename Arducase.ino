@@ -7,6 +7,16 @@ LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 // _______________________________________ Library __________________________________________________
 
 
+//====================================================================================================//
+// _______________________________________ HELPERS __________________________________________________
+
+#define percent_to_PWM(val) ((val * 255)/100)
+#define PWM_to_percent(val) ((val * 100)/255)
+
+// _______________________________________ HELPERS __________________________________________________
+//====================================================================================================//
+
+
 
 //============================================================================================================//
 // _______________________________________ REGULATION MODE __________________________________________________
@@ -53,7 +63,7 @@ void create_mode(struct Mode &mode, int pin_button, int pin_led, char *name, int
 
 void init_modes(){
 
-  // _________________________________ Gestion des Pins d'entrées de sondes thermiques _____________________________________________
+  // _________________________________ Gestion des Modes _____________________________________________
   //          variable        btn led    nom        min  max
   create_mode(mode_silent   , 23, 22, "Silent"    , 30 , 40  ); //En mode Silent, pourcentage de marche ventilateur maximal
   create_mode(mode_normal   , 25, 24, "Normal"    , 30 , 60  ); //En mode Normal, pourcentage de marche ventilateur maximal
@@ -65,6 +75,88 @@ void init_modes(){
 }
 // _______________________________________ REGULATION MODE __________________________________________________
 //============================================================================================================//
+
+
+
+
+//=========================================================================================================//
+// _______________________________________ VENTILATEURS __________________________________________________
+#define MAX_NB_VENTILO 5
+#define PWM_VENTILATEUR_MIN 85
+typedef struct Ventilo {
+  int pin;
+  char *name;
+
+  int curent_PWM;
+  int last_PWM; // ancien curent_PWM (pour gestion du boost)
+} Ventilo;
+
+
+Ventilo vent_pc;
+Ventilo vent_rad;
+Ventilo vent_wc;
+
+Ventilo *ventilos[MAX_NB_VENTILO];
+int nb_ventilos = 0;
+
+
+void create_ventilo(struct Ventilo &ventilo, int pin, char *name){
+  if (nb_ventilos + 1 > MAX_NB_VENTILO){
+    return;
+  }
+
+  ventilos[nb_ventilos] = &ventilo;
+  nb_ventilos++;
+
+  ventilo.pin = pin;
+  ventilo.name = name;
+  ventilo.curent_PWM = 0;
+  ventilo.last_PWM = 0;
+}
+
+void init_ventilos(){
+
+  // _________________________________ Gestion des Ventilos _____________________________________________
+  //             variable   pin   nom
+  create_ventilo(vent_pc  , 2  , "vent_pc"  ); //Groupe de ventilateur à l'intérieur du pc
+  create_ventilo(vent_rad , 3  , "vent_rad" ); //Groupe de ventilateur du radiateur PC
+  create_ventilo(vent_wc  , 5  , "vent_wc"  ); //Groupe de ventilateur de la watercase
+}
+
+
+void init_ventilo_regulation(){
+  int min = percent_to_PWM(selected_mode->pourcentage_min);
+  for (int i = 0; i < nb_ventilos; ++i) {
+    ventilos[i]->last_PWM = ventilos[i]->curent_PWM;
+    ventilos[i]->curent_PWM = min;
+  }
+}
+void finish_ventilo_regulation(){
+
+  int nb_boost = 0;
+  for (int i = 0; i < nb_ventilos; ++i) {
+    if (ventilos[i]->curent_PWM < PWM_VENTILATEUR_MIN){ // on est en dessous de la capacite du ventilateur, on l'arrete
+      analogWrite(ventilos[i]->pin, 0);
+      ventilos[i]->curent_PWM = 0;
+    }
+    else {
+      if (ventilos[i]->last_PWM < PWM_VENTILATEUR_MIN ){
+        analogWrite(ventilos[i]->pin, 255);
+        nb_boost ++;
+      }
+      else {
+        analogWrite(ventilos[i]->pin, ventilos[i]->curent_PWM);
+      }  
+    }
+  }
+
+  if (nb_boost > 0){
+    delay(200);
+  }
+}
+
+// _______________________________________ VENTILATEURS __________________________________________________
+//=========================================================================================================//
 
 
 //=============================================================================================================//
@@ -79,6 +171,10 @@ typedef struct Termal_sensor {
   int seuil_bas;
   int raw; // valeur brute lue
   float val; // valeur traduite en celcius
+
+  // ventilos associé a cette sonde
+  Ventilo* ventilos[MAX_NB_VENTILO];
+  int nb_ventilos;
 } Termal_sensor;
 
 
@@ -115,11 +211,23 @@ void create_thermal(struct Termal_sensor &sensor, int pin_number, char *name, in
   sensor.offset = offset;
   sensor.seuil_haut = seuil_haut;
   sensor.seuil_bas = seuil_bas;
+
+  sensor.nb_ventilos = 0;
+}
+
+void add_ventilo_to_sonde(struct Termal_sensor &sensor, struct Ventilo &ventilo){
+  if( sensor.nb_ventilos + 1 > MAX_NB_VENTILO ){
+    return;
+  }
+
+  sensor.ventilos[ sensor.nb_ventilos ] = &ventilo;
+  sensor.nb_ventilos ++;
+
 }
 
 void init_thermals(){
 
-  // _________________________________ Gestion des Pins d'entrées de sondes thermiques _____________________________________________
+  // _________________________________ Gestion des sondes thermiques _____________________________________________
   //              variable            pin  name              offset     seuil_haut       seuil_bas
   create_thermal(temp_wtr_in_pc      , 1 , "wtr_in_pc"      , 0);
   create_thermal(temp_wtr_out_pc     , 2 , "wtr_out_pc"     , -2.00);
@@ -132,6 +240,14 @@ void init_thermals(){
   create_thermal(temp_wtr_tec_hot    , 9 , "wtr_tec_hot"    , 0);
   create_thermal(temp_wc_case        , 10, "wc_case"        , 0);
 
+  // _________________________________ Association des sondes thermiques avec les ventilos _____________________________________________
+  //                   sonde              ventilos
+  add_ventilo_to_sonde(temp_wtr_in_pc   , vent_rad);
+  add_ventilo_to_sonde(temp_wtr_in_pc   , vent_pc);
+  add_ventilo_to_sonde(temp_wtr_in_pc   , vent_wc);
+  add_ventilo_to_sonde(temp_gpu         , vent_rad);
+  add_ventilo_to_sonde(temp_tec_cold    , vent_rad);
+  add_ventilo_to_sonde(temp_wtr_tec_hot , vent_rad);
 
   thermals_save();
 }
@@ -156,19 +272,31 @@ void read_and_convert_termal_sensor(struct Termal_sensor &sensor){
     sensor.val = Temp; // on initialise sensor.val pour la première fois !
   else if (Temp + 0.25 > sensor.val || Temp - 0.25 < sensor.val) // si on s'éloigne de plus de 0.25 de la dernière valeur
     sensor.val = Temp; // alors on change la valeur
+
+  if (sensor.val > sensor.seuil_haut){
+    int max = percent_to_PWM(selected_mode->pourcentage_max);
+    for (int i = 0; i < sensor.nb_ventilos; ++i) {
+      sensor.ventilos[i]->curent_PWM = max;
+    }
+  }
+  else if( sensor.val > sensor.seuil_bas ){
+
+    int output_PWM = map(sensor.val, sensor.seuil_bas, sensor.seuil_haut, percent_to_PWM(selected_mode->pourcentage_min) , percent_to_PWM(selected_mode->pourcentage_max) );
+
+    for (int i = 0; i < sensor.nb_ventilos; ++i) {
+      if (output_PWM > sensor.ventilos[i]->curent_PWM){
+        sensor.ventilos[i]->curent_PWM = output_PWM;
+      }
+    }
+  }
+
 }
 
 // _______________________________________ THERMALS SENSORS __________________________________________________
 //=============================================================================================================//
 
-#define PWM_VENTILATEUR_MIN 85
-
-
 
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
-const int vent_grp_pc = 2; //Groupe de ventilateur à l'intérieur du pc
-const int vent_grp_rad = 3; //Groupe de ventilateur du radiateur PC
-const int vent_grp_wc = 5; //Groupe de ventilateur de la watercase
 
 // -------------------------------------------------------------------------------- Choix de la caméra :
 const int btn_cam1 = 31; //Bouton pour choix caméra 1
@@ -261,6 +389,7 @@ void setup (void)
   TCCR3B |= prescalerVal; //OR the value in TCCR0B with binary number "00000001"
   
   init_modes();
+  init_ventilos();
   init_thermals();
 
 }
@@ -312,12 +441,18 @@ void set_led (void) {
 
 
 void thermals_save (void) { //Enregistrement température en Celsius dans chaque variables
+
+  init_ventilo_regulation();
+
   for (int i = 0; i < nb_sondes; ++i){
     read_and_convert_termal_sensor(*sondes[i]);
   }
+
+  finish_ventilo_regulation();
 }
 
 
+//=========================================================================================//
 // ________________ Affichage des temps sur LCD avec bouton Refresh ______________________
 
 
@@ -374,70 +509,8 @@ void lcd_temp_draw (void) {
 
 }
 // ________________ Affichage des temps sur LCD avec bouton Refresh ______________________
+//=========================================================================================//
 
-
-
-
-//régulation selon mode de refroidissement choisi.
-/*
-Pour la sonde wtr_out_pc
-1) Lire la température en Celsius
-2) Connaitre le mode de fonctionnement (Silent, normal, heavy, extreme)
-3) Piloter entre 0 et x% (selon le monde de fonctionnement) la sortie PWM3
-Penser à ajouter une boost start à 100% pendant un delay(200) pour être certain de démarrer le ventilateur.
-4) Ecrire dans une variable nommé "amount_vent_rad" le % de commande pour affichage ultérieur sur LCD
-
-
-1) wtr_out_pc contien la valeur en degres celsius
-2) Il faut convertire cette valeur
-
-
-
-*/
-
-
-void regulation () {
-//  int buf = value % 255; //sécurité pour ne pas dépasser une certaine valeur
-  Serial.print("selected_mode=");
-  Serial.println(selected_mode->name);
-  Serial.println(selected_mode->pourcentage_max);
-  //Serial.println(selected_mode->pourcentage_min);
-
-  static int last_outputValue = 0;
-
-  if ( temp_wtr_out_pc.val < temp_wtr_out_pc.seuil_bas){
-    outputValue = percent_to_PWM(selected_mode->pourcentage_min);
-  } else if (temp_wtr_out_pc.val > temp_wtr_out_pc.seuil_haut){
-    outputValue = percent_to_PWM(selected_mode->pourcentage_max);
-  }
-  else {
-    outputValue = map(temp_wtr_out_pc.val, temp_wtr_out_pc.seuil_bas, temp_wtr_out_pc.seuil_haut, percent_to_PWM(selected_mode->pourcentage_min) , percent_to_PWM(selected_mode->pourcentage_max) );
-  }
-
-  if (outputValue < PWM_VENTILATEUR_MIN){ // on est en dessous de la capacite du ventilateur, on l'arrete
-    analogWrite(vent_grp_rad, 0);
-  }
-  else {
-    // gestion du boost
-    if (last_outputValue < PWM_VENTILATEUR_MIN ){
-      analogWrite(vent_grp_rad, 255);
-      delay(200);
-    }
-    else {
-      analogWrite(vent_grp_rad, outputValue);
-    }
-  }
-
-  last_outputValue = outputValue;
-}
-
-int percent_to_PWM(int val){
-  return (val * 255)/100;
-}
-
-int PWM_to_percent(int val){
-  return (val * 100)/255;
-}
 
 
 // _______________________________________ Main Loop _______________________________________
@@ -445,8 +518,6 @@ void loop (void) {
   set_led();
   lcd_temp_draw();
   thermals_save();
-  regulation();
-
 }
 // _______________________________________ Main Loop _______________________________________
 
