@@ -364,7 +364,7 @@ void lcd_temp_draw (void) {
     if (screens > 0){
       lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val);
     }
-    
+
   }
 
 }
@@ -398,14 +398,10 @@ void regulation () {
   Serial.println(selected_mode->pourcentage_max);
   //Serial.println(selected_mode->pourcentage_min);
 
-  int avg = (selected_mode->pourcentage_max * 255)/100;
-  Serial.print("avg=");Serial.println(avg);
-
-
   if ( temp_wtr_out_pc.val < temp_wtr_out_pc.seuil_bas){
-    outputValue = percent_to_PWM(temp_wtr_out_pc.seuil_bas);
+    outputValue = percent_to_PWM(selected_mode->pourcentage_min);
   } else if (temp_wtr_out_pc.val > temp_wtr_out_pc.seuil_haut){
-    outputValue = percent_to_PWM(temp_wtr_out_pc.seuil_haut);
+    outputValue = percent_to_PWM(selected_mode->pourcentage_max);
   }
   else {
     outputValue = map(temp_wtr_out_pc.val, temp_wtr_out_pc.seuil_bas, temp_wtr_out_pc.seuil_haut, percent_to_PWM(selected_mode->pourcentage_min) , percent_to_PWM(selected_mode->pourcentage_max) );
