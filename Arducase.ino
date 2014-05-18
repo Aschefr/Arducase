@@ -10,14 +10,17 @@
 LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 // _______________________________________ Library __________________________________________________
 
+#define MAX_SIZE_THERMAL_NAME 15
+#define MAX_NB_THERMAL 10
 
 typedef struct Termal_sensor {
-  float offset; // offset pour convertion
-  int raw; // valeur brute lue
   int pin; // on c'est branché
-  float val; // valeur traduite en celcius
+  char *name;
+  float offset; // offset pour convertion
   int seuil_haut;
   int seuil_bas;
+  int raw; // valeur brute lue
+  float val; // valeur traduite en celcius
 } Termal_sensor;
 
 
@@ -35,63 +38,48 @@ Termal_sensor temp_wtr_tec_hot; //température eau boucle peltier chaud
 Termal_sensor temp_wc_case; //température dans la watercase
 
 
+Termal_sensor *sondes[MAX_NB_THERMAL];
+int nb_sondes = 0;
+
+void create_thermal(struct Termal_sensor &sensor, int pinNumer, char *name, int offset = 0, int seuil_haut = 25, int seuil_bas = 35){
+  if (nb_sondes + 1 > MAX_NB_THERMAL){
+    return;
+  }
+
+  sondes[nb_sondes] = &sensor;
+  nb_sondes++;
+
+  sensor.raw = -1;
+  sensor.val = -300.00;
+  
+  sensor.pin = pinNumer;
+  sensor.name = name;
+  sensor.offset = offset;
+  sensor.seuil_haut = seuil_haut;
+  sensor.seuil_bas = seuil_bas;
+}
+
 void init_thermals(){
 
-  // default values
-  Termal_sensor temp_default;
-  temp_default.raw = -1;
-  temp_default.val = -300.00;
-  temp_default.seuil_haut = 35;
-  temp_default.seuil_bas = 25;
-
-  // DAMM C LANGUAGE FUCK YOU !!!
-  temp_wtr_in_pc = temp_default;
-  temp_wtr_out_pc = temp_default;
-  temp_cpu = temp_default;
-  temp_gpu = temp_default;
-  temp_wtr_out_pcrad = temp_default;
-  temp_pc_case = temp_default;
-  temp_tec_hot = temp_default;
-  temp_tec_cold = temp_default;
-  temp_wtr_tec_hot = temp_default;
-  temp_wc_case = temp_default;
-  // END DAMM C LANGUAGE FUCK YOU !!
-
   // _________________________________ Gestion des Pins d'entrées de sondes thermiques _____________________________________________
-  temp_wtr_in_pc.pin = 1;
-  temp_wtr_out_pc.pin = 2;
-  temp_cpu.pin = 3;
-  temp_gpu.pin = 4;
-  temp_wtr_out_pcrad.pin = 5;
-  temp_pc_case.pin = 6;
-  temp_tec_hot.pin = 7;
-  temp_tec_cold.pin = 8;
-  temp_wtr_tec_hot.pin = 9;
-  temp_wc_case.pin = 10;
+  //              variable            pin  name              offset     seuil_haut       seuil_bas
+  create_thermal(temp_wtr_in_pc      , 1 , "wtr_in_pc"      , 0);
+  create_thermal(temp_wtr_out_pc     , 2 , "wtr_out_pc"     , -2.00);
+  create_thermal(temp_cpu            , 3 , "cpu"            , 0);
+  create_thermal(temp_gpu            , 4 , "gpu"            , 0);
+  create_thermal(temp_wtr_out_pcrad  , 5 , "wtr_out_pcrad"  , 0);
+  create_thermal(temp_pc_case        , 6 , "pc_case"        , 0);
+  create_thermal(temp_tec_hot        , 7 , "tec_hot"        , 0);
+  create_thermal(temp_tec_cold       , 8 , "tec_cold"       , 0);
+  create_thermal(temp_wtr_tec_hot    , 9 , "wtr_tec_hot"    , 0);
+  create_thermal(temp_wc_case        , 10, "wc_case"        , 0);
 
-  // _________________________________ Gestion des Offset de sondes thermiques _____________________________________________
-  temp_wtr_in_pc.offset = 0;
-  temp_wtr_out_pc.offset = -5.00;
-  temp_cpu.offset = 0;
-  temp_gpu.offset = 0;
-  temp_wtr_out_pcrad.offset = 0;
-  temp_pc_case.offset = 0;
-  temp_tec_hot.offset = 0;
-  temp_tec_cold.offset = 0;
-  temp_wtr_tec_hot.offset = 0;
-  temp_wc_case.offset = 0;
-
-  // _________________________________ Gestion des Seuils de sondes thermiques _____________________________________________
-
-  // exemple d'overwrite des seuils par defaut (par defaut : haut = 35, bas = 25)
-  //temp_wtr_tec_hot.seuil_haut = 45;
-  //temp_wtr_tec_hot.seuil_bas = 20;
 
   thermals_save();
 }
 
 // _________________________________ Functions pour sondes thermiques _____________________________________________
-void read_and_convert_termal_sensor(struct Termal_sensor sensor){
+void read_and_convert_termal_sensor(struct Termal_sensor &sensor){
 
   sensor.raw = analogRead(sensor.pin);
 
@@ -389,16 +377,9 @@ void set_led (void) {
 
 
 void thermals_save (void) { //Enregistrement température en Celsius dans chaque variables
-  read_and_convert_termal_sensor( temp_wtr_in_pc );
-  read_and_convert_termal_sensor( temp_wtr_out_pc );
-  read_and_convert_termal_sensor( temp_cpu );
-  read_and_convert_termal_sensor( temp_gpu );
-  read_and_convert_termal_sensor( temp_wtr_out_pcrad );
-  read_and_convert_termal_sensor( temp_pc_case );
-  read_and_convert_termal_sensor( temp_tec_hot );
-  read_and_convert_termal_sensor( temp_tec_cold );
-  read_and_convert_termal_sensor( temp_wtr_tec_hot );
-  read_and_convert_termal_sensor( temp_wc_case );
+  for (int i = 0; i < nb_sondes; ++i){
+    read_and_convert_termal_sensor(*sondes[i]);
+  }
 }
 
 
@@ -434,7 +415,7 @@ void lcd_temp_draw (void) {
     switch(screens) {
         case 0: lcd.clear(); 
                 screens=0; break;
-        case 1: lcd_set("wtr_in_pc :", temp_wtr_in_pc.val);
+        case 1: lcd_set(temp_wtr_in_pc.name, temp_wtr_in_pc.val);
                 break; 
         case 2: lcd_set("wtr_out_pc :", temp_wtr_out_pc.val);
                 lcd.setCursor(6, 1);
