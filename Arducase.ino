@@ -95,7 +95,7 @@ Termal_sensor temp_wc_case; //température dans la watercase
 Termal_sensor *sondes[MAX_NB_THERMAL];
 int nb_sondes = 0;
 
-void create_thermal(struct Termal_sensor &sensor, int pin_number, char *name, int offset = 0, int seuil_haut = 25, int seuil_bas = 35){
+void create_thermal(struct Termal_sensor &sensor, int pin_number, char *name, int offset = 0, int seuil_bas = 25, int seuil_haut = 35){
   if (nb_sondes + 1 > MAX_NB_THERMAL){
     return;
   }
