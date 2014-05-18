@@ -10,19 +10,19 @@ LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 //====================================================================================================//
 // _______________________________________ HELPERS __________________________________________________
 
-#define DEBUG 1
+#define DEBUG 1 //Debug mode = 1, sinon 0
 
 
-#define percent_to_PWM(val) ((val * 255)/100)
-#define PWM_to_percent(val) ((val * 100)/255)
+#define percent_to_PWM(val) ((val * 255)/100) //Conversion d'un pourcentage en un signal de sortie Arduino 0-255pt, en l'occurence pour le contrôle d'une PWM
+#define PWM_to_percent(val) ((val * 100)/255) //Exactement l'inverse
 
-void lcd_set (char *text, double variable){
+void lcd_set (char *text, double variable){ //Affichage d'un texte et d'une valeur prise sur une variable sur l'écran LCD
    lcd.clear();
-   lcd.setCursor(0, 0);
-   lcd.print(text);
-   lcd.setCursor(0, 1);
-   lcd.print(variable);
-   delay(200);
+   lcd.setCursor(0, 0); //selection première ligne
+   lcd.print(text); //afficher le contenu de "text"
+   lcd.setCursor(0, 1); //selection deuxième ligne
+   lcd.print(variable); //afficher le contenu de "variable"
+   delay(200); //delay pour laisser à l'utilisateur le temps de lire
 }
 
 
@@ -33,44 +33,48 @@ void lcd_set (char *text, double variable){
 
 //============================================================================================================//
 // _______________________________________ REGULATION MODE __________________________________________________
-#define MAX_NB_MODES 5
-typedef struct Mode {
-  int pin_button;
-  int pin_led;
-  char *name;
-  int pourcentage_min; // pourcentage min des ventilateurs
-  int pourcentage_max; // pourcentage max des ventilateurs
+#define MAX_NB_MODES 5 //Nombre de modes de régulation maximum
+typedef struct Mode { //définition d'une structure qui comporte :
+  int pin_button; //le pin du bouton
+  int pin_led; //le pin de la led
+  char *name; //le nom du mode
+  int pourcentage_min; // pourcentage min des ventilateurs dans le mode
+  int pourcentage_max; // pourcentage max des ventilateurs dans le mode
 } Mode;
 
+// Définition des modes  (déclaration des variables pour chaque mode)
+Mode mode_silent;
+Mode mode_normal;
+Mode mode_heavy;
+Mode mode_extreme;
 
-Mode mode_silent; //En mode Silent, pourcentage de marche ventilateur maximal
-Mode mode_normal; //En mode Normal, pourcentage de marche ventilateur maximal
-Mode mode_heavy; //En mode Heavy, pourcentage de marche ventilateur maximal
-Mode mode_extreme; //En mode Extreme, pourcentage de marche ventilateur maximal
+Mode *selected_mode = &mode_silent; // Variable de type "pointeur" vers le mode selectionné, ici, = &mode_silent pour démarré avec le mode "silent" au lancement de la carte.
 
-Mode *selected_mode = &mode_silent;
-
-Mode *modes[MAX_NB_MODES];
-int nb_modes = 0;
+Mode *modes[MAX_NB_MODES]; // Tableau de pointeur vers "l'objet Mode", ou plutôt un tableau de pointeur vers les objets "Mode", sert à lister tout les modes, en faire l'inventaire.
+int nb_modes = 0; //Variable pour compter le nombre de modes, utilisé plus bas
 
 
+/*
+ * Fonction permetant de créer un "mode" et initialiser l'objet avec les propriétés définies plus bas dans "Gestion des Modes"
+ */
 void create_mode(struct Mode &mode, int pin_button, int pin_led, char *name, int pourcentage_min = 0, int pourcentage_max = 100){
-  if (nb_modes + 1 > MAX_NB_MODES){
-    return;
+  if (nb_modes + 1 > MAX_NB_MODES){ //Si nb_mode + 1 est supérieur au nombre de mode maxi,
+    return; //Arrête la fonction, ne retourne rien.
   }
 
-  modes[nb_modes] = &mode;
-  nb_modes++;
+  //Sinon,
+  modes[nb_modes] = &mode; // ajout du mode dans l'invertaire de tous les modes
+  nb_modes++; //Incrémenter de 1 "nb_mode"
 
-  mode.pin_button = pin_button;
-  mode.pin_led = pin_led;
-  mode.name = name;
-  mode.pourcentage_min = pourcentage_min;
-  mode.pourcentage_max = pourcentage_max;
+  mode.pin_button = pin_button; //Stocker dans "pin_button" qui se trouve dans "mode" la valeur de "pin_button" -> celle lu plus bas ligne 82 à 85
+  mode.pin_led = pin_led; //Pareil
+  mode.name = name; //Idem
+  mode.pourcentage_min = pourcentage_min; //Idem
+  mode.pourcentage_max = pourcentage_max; //Idem
 
 
-  pinMode(mode.pin_button, INPUT);
-  pinMode(mode.pin_led, OUTPUT);
+  pinMode(mode.pin_button, INPUT); //définir le pin du bouton comme une entrée
+  pinMode(mode.pin_led, OUTPUT); //et le pin de la led comme une sortie, sinon ça marche pas.
 
 }
 
@@ -193,7 +197,7 @@ typedef struct Termal_sensor {
 
 
 // ----------------------------------------------------------------------------- Sonde de températures :
-// ???
+// Définition des sondes de température
 Termal_sensor temp_wtr_in_pc; 
 Termal_sensor temp_wtr_out_pc; 
 Termal_sensor temp_cpu; 
@@ -289,7 +293,7 @@ void read_and_convert_termal_sensor(struct Termal_sensor &sensor){
 
   if (sensor.val < -299.00)
     sensor.val = Temp; // on initialise sensor.val pour la première fois !
-  else if (Temp + 0.25 > sensor.val || Temp - 0.25 < sensor.val) // si on s'éloigne de plus de 0.25 de la dernière valeur
+  else if (Temp + 0.50 > sensor.val || Temp - 0.50 < sensor.val) // si on s'éloigne de plus de 0.25 de la dernière valeur
     sensor.val = Temp; // alors on change la valeur
 
   if (sensor.val > sensor.seuil_haut){
@@ -407,6 +411,9 @@ void setup (void)
   prescalerVal = 1; //set prescalerVal equal to binary number "00000001"
   TCCR3B |= prescalerVal; //OR the value in TCCR0B with binary number "00000001"
   
+
+  // on initialise les modes et tout
+  // l'ordre est important !!!!!
   init_modes();
   init_ventilos();
   init_thermals();
@@ -423,19 +430,19 @@ void setup (void)
 
 void set_mode (void) { 
 
-  int nb = 0;
-  Mode *temp_mode;
+  int nb_appuye = 0;
+  Mode *mode_appuye;
   for (int i = 0; i < nb_modes; ++i){
     if (digitalRead(modes[i]->pin_button) == HIGH){
-      nb++;
-      temp_mode = modes[i];
+      nb_appuye++;
+      mode_appuye = modes[i];
     }
   }
 
-  // si on a bien un bouton appuyé
-  if (nb == 1){
+  // si on a bien un seul bouton appuyé
+  if (nb_appuye == 1){
     // on set le mode actuel
-    selected_mode = temp_mode;
+    selected_mode = mode_appuye;
 
     // on eteinds toutes les leds
     for (int i = 0; i < nb_modes; ++i){
