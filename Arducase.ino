@@ -25,6 +25,7 @@ Mode mode_normal; //En mode Normal, pourcentage de marche ventilateur maximal
 Mode mode_heavy; //En mode Heavy, pourcentage de marche ventilateur maximal
 Mode mode_extreme; //En mode Extreme, pourcentage de marche ventilateur maximal
 
+Mode *selected_mode = &mode_silent;
 
 Mode *modes[MAX_NB_MODES];
 int nb_modes = 0;
@@ -54,10 +55,13 @@ void init_modes(){
 
   // _________________________________ Gestion des Pins d'entrées de sondes thermiques _____________________________________________
   //          variable        btn led    nom        min  max
-  create_mode(mode_silent   , 23, 22, "Silent"    , 0  , 20  ); //En mode Silent, pourcentage de marche ventilateur maximal
-  create_mode(mode_normal   , 25, 24, "Normal"    , 0  , 50  ); //En mode Normal, pourcentage de marche ventilateur maximal
-  create_mode(mode_heavy    , 27, 26, "Heavy"     , 40 , 70  ); //En mode Heavy, pourcentage de marche ventilateur maximal
+  create_mode(mode_silent   , 23, 22, "Silent"    , 30 , 40  ); //En mode Silent, pourcentage de marche ventilateur maximal
+  create_mode(mode_normal   , 25, 24, "Normal"    , 30 , 60  ); //En mode Normal, pourcentage de marche ventilateur maximal
+  create_mode(mode_heavy    , 27, 26, "Heavy"     , 50 , 80  ); //En mode Heavy, pourcentage de marche ventilateur maximal
   create_mode(mode_extreme  , 29, 28, "Extreme"   , 70 , 100 ); //En mode Extreme, pourcentage de marche ventilateur maximal
+
+  // alume la led du mode selectionné dès le debut
+  digitalWrite(selected_mode->pin_led, HIGH);
 }
 // _______________________________________ REGULATION MODE __________________________________________________
 //============================================================================================================//
@@ -156,6 +160,8 @@ void read_and_convert_termal_sensor(struct Termal_sensor &sensor){
 
 // _______________________________________ THERMALS SENSORS __________________________________________________
 //=============================================================================================================//
+
+#define PWM_VENTILATEUR_MIN 85
 
 
 
@@ -266,7 +272,6 @@ void setup (void)
 // __________ Gestion mode de fonctionnement, allumage LED et inscription LCD __________
 //
 
-Mode *selected_mode = &mode_silent;
 
 void set_led (void) { 
 
@@ -398,6 +403,8 @@ void regulation () {
   Serial.println(selected_mode->pourcentage_max);
   //Serial.println(selected_mode->pourcentage_min);
 
+  static int last_outputValue = 0;
+
   if ( temp_wtr_out_pc.val < temp_wtr_out_pc.seuil_bas){
     outputValue = percent_to_PWM(selected_mode->pourcentage_min);
   } else if (temp_wtr_out_pc.val > temp_wtr_out_pc.seuil_haut){
@@ -407,7 +414,21 @@ void regulation () {
     outputValue = map(temp_wtr_out_pc.val, temp_wtr_out_pc.seuil_bas, temp_wtr_out_pc.seuil_haut, percent_to_PWM(selected_mode->pourcentage_min) , percent_to_PWM(selected_mode->pourcentage_max) );
   }
 
-  analogWrite(vent_grp_rad, outputValue);
+  if (outputValue < PWM_VENTILATEUR_MIN){ // on est en dessous de la capacite du ventilateur, on l'arrete
+    analogWrite(vent_grp_rad, 0);
+  }
+  else {
+    // gestion du boost
+    if (last_outputValue < PWM_VENTILATEUR_MIN ){
+      analogWrite(vent_grp_rad, 255);
+      delay(200);
+    }
+    else {
+      analogWrite(vent_grp_rad, outputValue);
+    }
+  }
+
+  last_outputValue = outputValue;
 }
 
 int percent_to_PWM(int val){
