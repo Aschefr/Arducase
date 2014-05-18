@@ -242,12 +242,12 @@ void init_thermals(){
 
   // _________________________________ Association des sondes thermiques avec les ventilos _____________________________________________
   //                   sonde              ventilos
-  add_ventilo_to_sonde(temp_wtr_in_pc   , vent_rad);
-  add_ventilo_to_sonde(temp_wtr_in_pc   , vent_pc);
-  add_ventilo_to_sonde(temp_wtr_in_pc   , vent_wc);
+  add_ventilo_to_sonde(temp_wtr_out_pc  , vent_rad);
+  add_ventilo_to_sonde(temp_cpu         , vent_rad);
+  add_ventilo_to_sonde(temp_pc_case     , vent_pc );
   add_ventilo_to_sonde(temp_gpu         , vent_rad);
-  add_ventilo_to_sonde(temp_tec_cold    , vent_rad);
-  add_ventilo_to_sonde(temp_wtr_tec_hot , vent_rad);
+  add_ventilo_to_sonde(temp_tec_hot     , vent_wc );
+  add_ventilo_to_sonde(temp_wtr_tec_hot , vent_wc );
 
   thermals_save();
 }
