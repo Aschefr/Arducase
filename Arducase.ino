@@ -10,8 +10,21 @@ LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 //====================================================================================================//
 // _______________________________________ HELPERS __________________________________________________
 
+#define DEBUG 1
+
+
 #define percent_to_PWM(val) ((val * 255)/100)
 #define PWM_to_percent(val) ((val * 100)/255)
+
+void lcd_set (char *text, double variable){
+   lcd.clear();
+   lcd.setCursor(0, 0);
+   lcd.print(text);
+   lcd.setCursor(0, 1);
+   lcd.print(variable);
+   delay(200);
+}
+
 
 // _______________________________________ HELPERS __________________________________________________
 //====================================================================================================//
@@ -81,7 +94,7 @@ void init_modes(){
 
 //=========================================================================================================//
 // _______________________________________ VENTILATEURS __________________________________________________
-#define MAX_NB_VENTILO 5
+#define MAX_NB_VENTILO 3
 #define PWM_VENTILATEUR_MIN 85
 typedef struct Ventilo {
   int pin;
@@ -402,7 +415,7 @@ void setup (void)
 //
 
 
-void set_led (void) { 
+void set_mode (void) { 
 
   int nb = 0;
   Mode *temp_mode;
@@ -455,24 +468,11 @@ void thermals_save (void) { //Enregistrement température en Celsius dans chaque
 //=========================================================================================//
 // ________________ Affichage des temps sur LCD avec bouton Refresh ______________________
 
-
-void lcd_set (char *text, double variable){
-   lcd.clear();
-   lcd.setCursor(0, 0);
-   lcd.print(text);
-   lcd.setCursor(0, 1);
-   lcd.print(variable);
-   delay(200);
-}
-
-int amount_vent_rad; //affichage en % de la commande du ventilateur sortie 3
-double outputValue = 0;
-
-
-int screens=0; //Compteur pour changer d'écran
-int yazop = 0; //Pour fonctionnement du bouton "next" au relachement
 void lcd_temp_draw (void) {
  
+  static int screens=0; //Compteur pour changer d'écran
+  static int yazop = 0; //Pour fonctionnement du bouton "next" au relachement
+
   if (digitalRead(btn_next) == HIGH)
     yazop = 1;
 
@@ -496,13 +496,24 @@ void lcd_temp_draw (void) {
   
   if (digitalRead(btn_refrsh) == HIGH) {
 
-    if (screens == 2){
-      Serial.print("avg=");
-      Serial.println(PWM_to_percent(outputValue));
-    }
-
     if (screens > 0){
       lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val);
+
+      if (DEBUG){
+        Serial.print(sondes[screens - 1]->name);
+        Serial.print(' = ');
+        Serial.print(sondes[screens - 1]->val);
+        Serial.println('°C');
+
+        for (int i = 0; i < sondes[screens - 1]->nb_ventilos; ++i){
+
+          Serial.print('=> ');
+          Serial.print(sondes[screens - 1]->ventilos[i]->name);
+          Serial.print(' = ');
+          Serial.print(PWM_to_percent( sondes[screens - 1]->ventilos[i]->curent_PWM ));
+          Serial.println('%');
+        }
+      }
     }
 
   }
@@ -515,10 +526,9 @@ void lcd_temp_draw (void) {
 
 // _______________________________________ Main Loop _______________________________________
 void loop (void) {
-  set_led();
+  set_mode();
   lcd_temp_draw();
   thermals_save();
 }
 // _______________________________________ Main Loop _______________________________________
-
 
