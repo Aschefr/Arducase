@@ -389,8 +389,7 @@ void thermals_save (void) { //Enregistrement température en Celsius dans chaque
 
 
 // ________________ Affichage des temps sur LCD avec bouton Refresh ______________________
-int screens=0; //Compteur pour changer d'écran
-int yazop = 0; //Pour fonctionnement du bouton "next" au relachement
+
 
 void lcd_set (char *text, double variable){
    lcd.clear();
@@ -404,6 +403,9 @@ void lcd_set (char *text, double variable){
 int amount_vent_rad; //affichage en % de la commande du ventilateur sortie 3
 double outputValue = 0;
 
+
+int screens=0; //Compteur pour changer d'écran
+int yazop = 0; //Pour fonctionnement du bouton "next" au relachement
 void lcd_temp_draw (void) {
  
   if (digitalRead(btn_next) == HIGH)
@@ -411,76 +413,27 @@ void lcd_temp_draw (void) {
 
   if ( digitalRead(btn_next)==LOW && yazop==1 ) {
     //Serial.println(screens);
+    
     screens++;
-    switch(screens) {
-        case 0: lcd.clear(); 
-                screens=0; break;
-        case 1: lcd_set(temp_wtr_in_pc.name, temp_wtr_in_pc.val);
-                break; 
-        case 2: lcd_set("wtr_out_pc :", temp_wtr_out_pc.val);
-                lcd.setCursor(6, 1);
-                lcd.print("vent=");
-                //lcd.setCursor(6+length("vent="), 1);
-                lcd.setCursor(6+5, 1);
-                lcd.print(outputValue);
-                break;
-        case 3: lcd_set("cpu :", temp_cpu.val);
-                break; 
-        case 4: lcd_set("gpup :", temp_gpu.val);
-                break;
-        case 5: lcd_set("wtr_out_pcrad :", temp_wtr_out_pcrad.val);
-                break; 
-        case 6: lcd_set("pc_case :", temp_pc_case.val);
-                break; 
-        case 7: lcd_set("tec_hot :", temp_tec_hot.val);
-                break; 
-        case 8: lcd_set("tec_cold :", temp_tec_cold.val);
-                break;
-        case 9: lcd_set("wtr_tec_hot :", temp_wtr_tec_hot.val);
-                break; 
-        case 10: lcd_set("wc_case :", temp_wc_case.val);
-                 break;
-        default: screens=0; 
-                 lcd.clear();
-                 delay(200);
-                 break;
+    if (screens < 0 || screens > nb_sondes){
+      screens = 0;
     }
-     yazop=0;
+
+    if (screens == 0){ // on eteind l'ecran
+      lcd.clear();
+    }
+    else {
+      lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val);
+    }
+    yazop=0;
   }
   
   if (digitalRead(btn_refrsh) == HIGH) {
-      switch(screens) {
-        case 1: lcd_set("wtr_in_pc :", temp_wtr_in_pc.val);
-                break; 
-        case 2: lcd_set("wtr_out_pc :", temp_wtr_out_pc.val);
-                lcd.setCursor(6, 1);
-                lcd.print("vent=");
-                //lcd.setCursor(6+length("vent="), 1);
-                lcd.setCursor(6+5, 1);
-                lcd.print(outputValue);
-                break;
-        case 3: lcd_set("cpu :", temp_cpu.val);
-                break; 
-        case 4: lcd_set("gpup :", temp_gpu.val);
-                break;
-        case 5: lcd_set("wtr_out_pcrad :", temp_wtr_out_pcrad.val);
-                break; 
-        case 6: lcd_set("pc_case :", temp_pc_case.val);
-                break; 
-        case 7: lcd_set("tec_hot :", temp_tec_hot.val);
-                break; 
-        case 8: lcd_set("tec_cold :", temp_tec_cold.val);
-                break;
-        case 9: lcd_set("wtr_tec_hot :", temp_wtr_tec_hot.val);
-                break; 
-        case 10: lcd_set("wc_case :", temp_wc_case.val);
-                 break;
-        default: break;
+    if (screens > 0){
+      lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val);
     }
   }
-  else {
-     // ignore
-  }    
+
 }
 // ________________ Affichage des temps sur LCD avec bouton Refresh ______________________
 
