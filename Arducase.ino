@@ -20,10 +20,10 @@ typedef struct Mode {
 } Mode;
 
 
-Mode mode_silent = 20; //En mode Silent, pourcentage de marche ventilateur maximal
-Mode mode_normal = 50; //En mode Normal, pourcentage de marche ventilateur maximal
-Mode mode_heavy = 70; //En mode Heavy, pourcentage de marche ventilateur maximal
-Mode mode_extreme = 100; //En mode Extreme, pourcentage de marche ventilateur maximal
+Mode mode_silent; //En mode Silent, pourcentage de marche ventilateur maximal
+Mode mode_normal; //En mode Normal, pourcentage de marche ventilateur maximal
+Mode mode_heavy; //En mode Heavy, pourcentage de marche ventilateur maximal
+Mode mode_extreme; //En mode Extreme, pourcentage de marche ventilateur maximal
 
 
 Mode *modes[MAX_NB_MODES];
@@ -273,9 +273,9 @@ void set_led (void) {
   int nb = 0;
   Mode *temp_mode;
   for (int i = 0; i < nb_modes; ++i){
-    if (digitalRead(mode[i]->pin_button) == HIGH){
+    if (digitalRead(modes[i]->pin_button) == HIGH){
       nb++;
-      temp_mode = mode[i];
+      temp_mode = modes[i];
     }
   }
 
@@ -286,7 +286,7 @@ void set_led (void) {
 
     // on eteinds toutes les leds
     for (int i = 0; i < nb_modes; ++i){
-      digitalWrite(mode[i]->pin_led, LOW);
+      digitalWrite(modes[i]->pin_led, LOW);
     }
     // on ralume le mode selectionné
     digitalWrite(selected_mode->pin_led, HIGH);
