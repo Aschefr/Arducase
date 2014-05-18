@@ -350,13 +350,21 @@ void lcd_temp_draw (void) {
     else {
       lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val);
     }
+
     yazop=0;
   }
   
   if (digitalRead(btn_refrsh) == HIGH) {
+
+    if (screens == 2){
+      Serial.print("avg=");
+      Serial.println(PWM_to_percent(outputValue));
+    }
+
     if (screens > 0){
       lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val);
     }
+    
   }
 
 }
@@ -392,17 +400,27 @@ void regulation () {
 
   int avg = (selected_mode->pourcentage_max * 255)/100;
   Serial.print("avg=");Serial.println(avg);
-  
-  if (temp_wtr_out_pc.val > temp_wtr_out_pc.seuil_bas) {
-    outputValue = map(temp_wtr_out_pc.val, temp_wtr_out_pc.seuil_bas, temp_wtr_out_pc.seuil_haut, 0, avg);
-    analogWrite(vent_grp_rad, outputValue); 
+
+
+  if ( temp_wtr_out_pc.val < temp_wtr_out_pc.seuil_bas){
+    outputValue = percent_to_PWM(temp_wtr_out_pc.seuil_bas);
+  } else if (temp_wtr_out_pc.val > temp_wtr_out_pc.seuil_haut){
+    outputValue = percent_to_PWM(temp_wtr_out_pc.seuil_haut);
   }
   else {
-    analogWrite(vent_grp_rad, 0);
+    outputValue = map(temp_wtr_out_pc.val, temp_wtr_out_pc.seuil_bas, temp_wtr_out_pc.seuil_haut, percent_to_PWM(selected_mode->pourcentage_min) , percent_to_PWM(selected_mode->pourcentage_max) );
   }
+
+  analogWrite(vent_grp_rad, outputValue);
 }
 
+int percent_to_PWM(int val){
+  return (val * 255)/100;
+}
 
+int PWM_to_percent(int val){
+  return (val * 100)/255;
+}
 
 
 // _______________________________________ Main Loop _______________________________________
