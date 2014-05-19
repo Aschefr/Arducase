@@ -29,9 +29,7 @@ void lcd_set (char *nom_sonde, double temperature, char *nom_vent, int percent){
    lcd.setCursor(13, 1);
    lcd.print(percent); 
    lcd.setCursor(15, 1);
-   lcd.print("%"); 
-
-   delay(200); //delay pour laisser à l'utilisateur le temps de lire
+   lcd.print("%");
 }
 
 
@@ -521,29 +519,28 @@ void lcd_temp_draw (void) {
     yazop=0;
   }
   
-  if (digitalRead(btn_refrsh) == HIGH) {
+  static int last_refresh = 0;
+  if (screens > 0 && millis() - last_refresh > 500){
+    last_refresh = millis();
 
-    if (screens > 0){
-      lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val, sondes[screens - 1]->ventilos[0]->name, PWM_to_percent( sondes[screens - 1]->ventilos[0]->curent_PWM) );
+    lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val, sondes[screens - 1]->ventilos[0]->name, PWM_to_percent( sondes[screens - 1]->ventilos[0]->curent_PWM) );
 
 
-      #if DEBUG 
-        Serial.print(sondes[screens - 1]->name);
+    #if DEBUG 
+      Serial.print(sondes[screens - 1]->name);
+      Serial.print(" = ");
+      Serial.print(sondes[screens - 1]->val);
+      Serial.println(" °C");
+
+      for (int i = 0; i < sondes[screens - 1]->nb_ventilos; ++i){
+
+        Serial.print("=> ");
+        Serial.print(sondes[screens - 1]->ventilos[i]->name);
         Serial.print(" = ");
-        Serial.print(sondes[screens - 1]->val);
-        Serial.println(" °C");
-
-        for (int i = 0; i < sondes[screens - 1]->nb_ventilos; ++i){
-
-          Serial.print("=> ");
-          Serial.print(sondes[screens - 1]->ventilos[i]->name);
-          Serial.print(" = ");
-          Serial.print(PWM_to_percent( sondes[screens - 1]->ventilos[i]->curent_PWM ));
-          Serial.println("%");
-        }
-      #endif
-    }
-
+        Serial.print(PWM_to_percent( sondes[screens - 1]->ventilos[i]->curent_PWM ));
+        Serial.println("%");
+      }
+    #endif
   }
 
 }
