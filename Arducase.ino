@@ -16,14 +16,24 @@ LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 #define percent_to_PWM(val) ((val * 255)/100) //Conversion d'un pourcentage en un signal de sortie Arduino 0-255pt, en l'occurence pour le contrôle d'une PWM
 #define PWM_to_percent(val) ((val * 100)/255) //Exactement l'inverse
 
-void lcd_set (char *text, double variable){ //Affichage d'un texte et d'une valeur prise sur une variable sur l'écran LCD
+void lcd_set (char *nom_sonde, double temperature, char *nom_vent, int percent){ //Affichage d'un texte et d'une valeur prise sur une variable sur l'écran LCD
+  //Affichage nom de la sonde, température en face
    lcd.clear();
    lcd.setCursor(0, 0); //selection première ligne
-   lcd.print(text); //afficher le contenu de "text"
-   lcd.setCursor(0, 1); //selection deuxième ligne
-   lcd.print(variable); //afficher le contenu de "variable"
+   lcd.print(nom_sonde); //afficher le contenu de "nom_sonde"
+   lcd.setCursor(11, 0); //selection deuxième ligne
+   lcd.print(temperature); //afficher le contenu de "temperature"
+   //Affichage ventilateur commandé, pourcentage de commande en face
+   lcd.setCursor(0, 1); 
+   lcd.print(nom_vent); 
+   lcd.setCursor(13, 1);
+   lcd.print(percent); 
+   lcd.setCursor(15, 1);
+   lcd.print("%"); 
+
    delay(200); //delay pour laisser à l'utilisateur le temps de lire
 }
+
 
 
 // _______________________________________ HELPERS __________________________________________________
@@ -50,7 +60,7 @@ Mode mode_extreme;
 
 Mode *selected_mode = &mode_silent; // Variable de type "pointeur" vers le mode selectionné, ici, = &mode_silent pour démarré avec le mode "silent" au lancement de la carte.
 
-Mode *modes[MAX_NB_MODES]; // Tableau de pointeur vers "l'objet Mode", ou plutôt un tableau de pointeur vers les objets "Mode", sert à lister tout les modes, en faire l'inventaire.
+Mode *modes[MAX_NB_MODES]; // Tableau de pointeur vers l'objet "Mode", ou plutôt un tableau de pointeur vers les objets "Mode", sert à lister tout les modes, en faire l'inventaire.
 int nb_modes = 0; //Variable pour compter le nombre de modes, utilisé plus bas
 
 
@@ -66,7 +76,7 @@ void create_mode(struct Mode &mode, int pin_button, int pin_led, char *name, int
   modes[nb_modes] = &mode; // ajout du mode dans l'invertaire de tous les modes
   nb_modes++; //Incrémenter de 1 "nb_mode"
 
-  mode.pin_button = pin_button; //Stocker dans "pin_button" qui se trouve dans "mode" la valeur de "pin_button" -> celle lu plus bas ligne 82 à 85
+  mode.pin_button = pin_button; //Stocker dans "pin_button" qui se trouve dans "mode" la valeur de "pin_button" -> celle lu plus bas dans "Gestion des Modes"
   mode.pin_led = pin_led; //Pareil
   mode.name = name; //Idem
   mode.pourcentage_min = pourcentage_min; //Idem
@@ -98,7 +108,7 @@ void init_modes(){
 
 //=========================================================================================================//
 // _______________________________________ VENTILATEURS __________________________________________________
-#define MAX_NB_VENTILO 3
+#define MAX_NB_VENTILO 4
 #define PWM_VENTILATEUR_MIN 85
 typedef struct Ventilo {
   int pin;
@@ -112,6 +122,7 @@ typedef struct Ventilo {
 Ventilo vent_pc;
 Ventilo vent_rad;
 Ventilo vent_wc;
+Ventilo none; //Fake ventilo
 
 Ventilo *ventilos[MAX_NB_VENTILO];
 int nb_ventilos = 0;
@@ -127,8 +138,8 @@ void create_ventilo(struct Ventilo &ventilo, int pin, char *name){
 
   ventilo.pin = pin;
   ventilo.name = name;
-  ventilo.curent_PWM = 0;
-  ventilo.last_PWM = 0;
+  ventilo.curent_PWM = 0; // ???
+  ventilo.last_PWM = 0; // ???
 }
 
 void init_ventilos(){
@@ -138,6 +149,7 @@ void init_ventilos(){
   create_ventilo(vent_pc  , 2  , "vent_pc"  ); //Groupe de ventilateur à l'intérieur du pc
   create_ventilo(vent_rad , 3  , "vent_rad" ); //Groupe de ventilateur du radiateur PC
   create_ventilo(vent_wc  , 5  , "vent_wc"  ); //Groupe de ventilateur de la watercase
+  create_ventilo(none     , 13 , "Aucun"    ); //Ventilateur "Aucun", pin 13 y'a rien dessus, en fait c'est une gruge pour les sondes qui ne pilotes pas de ventilateur.
 }
 
 
@@ -157,7 +169,7 @@ void finish_ventilo_regulation(){
       ventilos[i]->curent_PWM = 0;
     }
     else {
-      if (ventilos[i]->last_PWM < PWM_VENTILATEUR_MIN ){
+      if (ventilos[i]->last_PWM < PWM_VENTILATEUR_MIN ){ //On est juste au dessus de la capacité du ventilateur, on le démarre avec un boost à fond pendant 200ms
         analogWrite(ventilos[i]->pin, 255);
         nb_boost ++;
       }
@@ -261,16 +273,17 @@ void init_thermals(){
 
   // _________________________________ Association des sondes thermiques avec les ventilos _____________________________________________
   //                   sonde              ventilos
-  add_ventilo_to_sonde(temp_wtr_out_pc  , vent_rad);
-  add_ventilo_to_sonde(temp_cpu         , vent_rad);
-  add_ventilo_to_sonde(temp_gpu         , vent_rad);
-
-  add_ventilo_to_sonde(temp_pc_case     , vent_pc );
-
-  add_ventilo_to_sonde(temp_tec_hot     , vent_wc );
-  add_ventilo_to_sonde(temp_tec_cold    , vent_wc );
-  add_ventilo_to_sonde(temp_wtr_tec_hot , vent_wc );
-  add_ventilo_to_sonde(temp_wc_case     , vent_wc );
+  
+  add_ventilo_to_sonde(temp_wtr_in_pc    , none    );
+  add_ventilo_to_sonde(temp_wtr_out_pc   , vent_rad);
+  add_ventilo_to_sonde(temp_cpu          , vent_rad);
+  add_ventilo_to_sonde(temp_gpu          , vent_rad);
+  add_ventilo_to_sonde(temp_wtr_out_pcrad, none    );
+  add_ventilo_to_sonde(temp_pc_case      , vent_pc );
+  add_ventilo_to_sonde(temp_tec_hot      , vent_wc );
+  add_ventilo_to_sonde(temp_tec_cold     , vent_wc );
+  add_ventilo_to_sonde(temp_wtr_tec_hot  , vent_wc );
+  add_ventilo_to_sonde(temp_wc_case      , vent_wc );
 
   thermals_save();
 }
@@ -293,7 +306,7 @@ void read_and_convert_termal_sensor(struct Termal_sensor &sensor){
 
   if (sensor.val < -299.00)
     sensor.val = Temp; // on initialise sensor.val pour la première fois !
-  else if (Temp + 0.50 > sensor.val || Temp - 0.50 < sensor.val) // si on s'éloigne de plus de 0.25 de la dernière valeur
+  else if (Temp + 0.50 > sensor.val || Temp - 0.50 < sensor.val) // si on s'éloigne de plus de 0.50 de la dernière valeur
     sensor.val = Temp; // alors on change la valeur
 
   if (sensor.val > sensor.seuil_haut){
@@ -501,7 +514,8 @@ void lcd_temp_draw (void) {
       lcd.clear();
     }
     else {
-      lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val);
+      lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val, ventilos[screens - 1]->name, PWM_to_percent( ventilos[screens - 1]->curent_PWM) ); //Affichage de l'écran demandé
+      //lcd_vent
     }
 
     yazop=0;
@@ -510,7 +524,8 @@ void lcd_temp_draw (void) {
   if (digitalRead(btn_refrsh) == HIGH) {
 
     if (screens > 0){
-      lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val);
+      lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val, ventilos[screens - 1]->name, PWM_to_percent( ventilos[screens - 1]->curent_PWM) );
+
 
       #if DEBUG 
         Serial.print(sondes[screens - 1]->name);
