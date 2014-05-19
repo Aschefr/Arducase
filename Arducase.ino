@@ -16,24 +16,6 @@ LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 #define percent_to_PWM(val) ((val * 255)/100) //Conversion d'un pourcentage en un signal de sortie Arduino 0-255pt, en l'occurence pour le contrôle d'une PWM
 #define PWM_to_percent(val) ((val * 100)/255) //Exactement l'inverse
 
-void lcd_set (char *nom_sonde, double temperature, char *nom_vent, int percent){ //Affichage d'un texte et d'une valeur prise sur une variable sur l'écran LCD
-  //Affichage nom de la sonde, température en face
-   lcd.clear();
-   lcd.setCursor(0, 0); //selection première ligne
-   lcd.print(nom_sonde); //afficher le contenu de "nom_sonde"
-   lcd.setCursor(11, 0); //selection deuxième ligne
-   lcd.print(temperature); //afficher le contenu de "temperature"
-   //Affichage ventilateur commandé, pourcentage de commande en face
-   lcd.setCursor(0, 1); 
-   lcd.print(nom_vent); 
-   lcd.setCursor(13, 1);
-   lcd.print(percent); 
-   lcd.setCursor(15, 1);
-   lcd.print("%");
-}
-
-
-
 // _______________________________________ HELPERS __________________________________________________
 //====================================================================================================//
 
@@ -120,7 +102,6 @@ typedef struct Ventilo {
 Ventilo vent_pc;
 Ventilo vent_rad;
 Ventilo vent_wc;
-Ventilo none; //Fake ventilo
 
 Ventilo *ventilos[MAX_NB_VENTILO];
 int nb_ventilos = 0;
@@ -147,7 +128,6 @@ void init_ventilos(){
   create_ventilo(vent_pc  , 2  , "vent_pc"  ); //Groupe de ventilateur à l'intérieur du pc
   create_ventilo(vent_rad , 3  , "vent_rad" ); //Groupe de ventilateur du radiateur PC
   create_ventilo(vent_wc  , 5  , "vent_wc"  ); //Groupe de ventilateur de la watercase
-  create_ventilo(none     , 13 , "Aucun"    ); //Ventilateur "Aucun", pin 13 y'a rien dessus, en fait c'est une gruge pour les sondes qui ne pilotes pas de ventilateur.
 }
 
 
@@ -189,6 +169,7 @@ void finish_ventilo_regulation(){
 //=============================================================================================================//
 // _______________________________________ THERMALS SENSORS __________________________________________________
 #define MAX_NB_THERMAL 10
+#define PRECISION_SONDE 0.5 // precision de la sonde en degree celsuis
 
 typedef struct Termal_sensor {
   int pin; // on c'est branché
@@ -272,11 +253,9 @@ void init_thermals(){
   // _________________________________ Association des sondes thermiques avec les ventilos _____________________________________________
   //                   sonde              ventilos
   
-  add_ventilo_to_sonde(temp_wtr_in_pc    , none    );
   add_ventilo_to_sonde(temp_wtr_out_pc   , vent_rad);
   add_ventilo_to_sonde(temp_cpu          , vent_rad);
   add_ventilo_to_sonde(temp_gpu          , vent_rad);
-  add_ventilo_to_sonde(temp_wtr_out_pcrad, none    );
   add_ventilo_to_sonde(temp_pc_case      , vent_pc );
   add_ventilo_to_sonde(temp_tec_hot      , vent_wc );
   add_ventilo_to_sonde(temp_tec_cold     , vent_wc );
@@ -304,7 +283,7 @@ void read_and_convert_termal_sensor(struct Termal_sensor &sensor){
 
   if (sensor.val < -299.00)
     sensor.val = Temp; // on initialise sensor.val pour la première fois !
-  else if (Temp + 0.50 > sensor.val || Temp - 0.50 < sensor.val) // si on s'éloigne de plus de 0.50 de la dernière valeur
+  else if (Temp + PRECISION_SONDE > sensor.val || Temp - PRECISION_SONDE < sensor.val) // si on s'éloigne de plus de 0.50 de la dernière valeur
     sensor.val = Temp; // alors on change la valeur
 
   if (sensor.val > sensor.seuil_haut){
@@ -325,6 +304,51 @@ void read_and_convert_termal_sensor(struct Termal_sensor &sensor){
   }
 
 }
+
+
+void lcd_print_sonde (struct Termal_sensor* sensor){
+
+  //Affichage nom de la sonde, température en face
+
+  lcd.clear();
+  lcd.setCursor(0, 0); //selection première ligne
+  lcd.print(sensor->name); //afficher le contenu de "nom_sonde"
+  lcd.setCursor(11, 0); //selection deuxième ligne
+  lcd.print(sensor->val); //afficher le contenu de "temperature"
+  //Affichage ventilateur commandé, pourcentage de commande en face
+  if (sensor->nb_ventilos == 0){
+    lcd.setCursor(0, 1);
+    lcd.print("Aucun ventilos");
+  }
+  else if (sensor->nb_ventilos == 1){
+    lcd.setCursor(0, 1); 
+    lcd.print(sensor->ventilos[0]->name); 
+    lcd.setCursor(13, 1);
+    lcd.print(PWM_to_percent(sensor->ventilos[0]->curent_PWM)); 
+    lcd.setCursor(15, 1);
+    lcd.print("%"); 
+  }
+  else if (sensor->nb_ventilos == 2){
+    lcd.setCursor(0, 1);
+    lcd.print("Ventilo: "); 
+
+    lcd.setCursor(9, 1);
+    lcd.print(PWM_to_percent(sensor->ventilos[0]->curent_PWM)); 
+    lcd.setCursor(11, 1);
+    lcd.print("%");
+
+    lcd.setCursor(13, 1);
+    lcd.print(PWM_to_percent(sensor->ventilos[1]->curent_PWM)); 
+    lcd.setCursor(15, 1);
+    lcd.print("%");
+  }
+  else {
+    lcd.setCursor(0, 1);
+    lcd.print("Trop de ventilos");
+  }
+
+}
+
 
 // _______________________________________ THERMALS SENSORS __________________________________________________
 //=============================================================================================================//
@@ -384,53 +408,6 @@ const int vu_eff = 9; //Vumetre efficacité refroidissement
 const int vu_ech = 10; //Vumetre echauffement de l'eau après passage dans pc
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
 
-
-
-
-// _______________________________________ Setup _______________________________________
-void setup (void)
-{
-  // set up the LCD's number of columns and rows: 
-  lcd.begin(16, 2);
-  
-  // initialize serial communication at 9600 bits per second :
-  Serial.begin(9600);
-  
-  /*
-  Fréquence de la PWM :
-  TCCR0B est pour le pin 4
-  TCCR1B est pour le pin 11, 12, 13 (le pwm 13 est déconseillé, il fonctionne mal)
-  TCCR2B est pour le pin 9, 10
-  TCCR3B est pour le pin 2, 3, 5
-  TCCR4B est pour le pin 6, 7, 8
-
-  Inclure ce code dans le setup :
-  int prescalerVal = 0x07;
-  TCCRnB &= ~prescalerVal;
-  
-  prescalerVal = 1;
-  TCCRnB |= prescalerVal;
-  Remplacer le "n" de "TRCCRnB" par 0, 1, 2, 3 ou 4 selon les pin que vous souhaitez modifier.
-  Ce code set la fréquence maximal de la PWM sur les pin concernés.
-  */
-
-  //First clear all three prescaler bits:
-  int prescalerVal = 0x07; //create a variable called prescalerVal and set it equal to the binary number "00000111"
-  TCCR3B &= ~prescalerVal; //AND the value in TCCR0B with binary number "11111000"
-
-  //Now set the appropriate prescaler bits:
-  prescalerVal = 1; //set prescalerVal equal to binary number "00000001"
-  TCCR3B |= prescalerVal; //OR the value in TCCR0B with binary number "00000001"
-  
-
-  // on initialise les modes et tout
-  // l'ordre est important !!!!!
-  init_modes();
-  init_ventilos();
-  init_thermals();
-
-}
-// _______________________________________ Setup _______________________________________
 
 
 
@@ -512,8 +489,7 @@ void lcd_temp_draw (void) {
       lcd.clear();
     }
     else {
-      lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val, sondes[screens - 1]->ventilos[0]->name, PWM_to_percent( sondes[screens - 1]->ventilos[0]->curent_PWM) ); //Affichage de l'écran demandé
-      //lcd_print_sonde(sondes[screens - 1]);
+      lcd_print_sonde(sondes[screens - 1]); //Affichage de l'écran demandé
     }
 
     yazop=0;
@@ -523,8 +499,7 @@ void lcd_temp_draw (void) {
   if (screens > 0 && millis() - last_refresh > 500){
     last_refresh = millis();
 
-    lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val, sondes[screens - 1]->ventilos[0]->name, PWM_to_percent( sondes[screens - 1]->ventilos[0]->curent_PWM) );
-
+    lcd_print_sonde(sondes[screens - 1]);
 
     #if DEBUG 
       Serial.print(sondes[screens - 1]->name);
@@ -547,6 +522,58 @@ void lcd_temp_draw (void) {
 // ________________ Affichage des temps sur LCD avec bouton Refresh ______________________
 //=========================================================================================//
 
+
+
+
+// _______________________________________ Setup _______________________________________
+void setup (void)
+{
+  // set up the LCD's number of columns and rows: 
+  lcd.begin(16, 2);
+  
+  // initialize serial communication at 9600 bits per second :
+  Serial.begin(9600);
+  
+  /*
+  Fréquence de la PWM :
+  TCCR0B est pour le pin 4
+  TCCR1B est pour le pin 11, 12, 13 (le pwm 13 est déconseillé, il fonctionne mal)
+  TCCR2B est pour le pin 9, 10
+  TCCR3B est pour le pin 2, 3, 5
+  TCCR4B est pour le pin 6, 7, 8
+
+  Inclure ce code dans le setup :
+  int prescalerVal = 0x07;
+  TCCRnB &= ~prescalerVal;
+  
+  prescalerVal = 1;
+  TCCRnB |= prescalerVal;
+  Remplacer le "n" de "TRCCRnB" par 0, 1, 2, 3 ou 4 selon les pin que vous souhaitez modifier.
+  Ce code set la fréquence maximal de la PWM sur les pin concernés.
+  */
+
+  //First clear all three prescaler bits:
+  int prescalerVal = 0x07; //create a variable called prescalerVal and set it equal to the binary number "00000111"
+  TCCR3B &= ~prescalerVal; //AND the value in TCCR0B with binary number "11111000"
+
+  //Now set the appropriate prescaler bits:
+  prescalerVal = 1; //set prescalerVal equal to binary number "00000001"
+  TCCR3B |= prescalerVal; //OR the value in TCCR0B with binary number "00000001"
+  
+
+  // on initialise les modes et tout
+  // l'ordre est important !!!!!
+  init_modes();
+  init_ventilos();
+  init_thermals();
+
+
+  Alarm.timerRepeat(1, set_mode);
+  Alarm.timerRepeat(1, lcd_temp_draw);
+  Alarm.timerRepeat(1, thermals_save);
+
+}
+// _______________________________________ Setup _______________________________________
 
 
 // _______________________________________ Main Loop _______________________________________
