@@ -514,8 +514,8 @@ void lcd_temp_draw (void) {
       lcd.clear();
     }
     else {
-      lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val, ventilos[screens - 1]->name, PWM_to_percent( ventilos[screens - 1]->curent_PWM) ); //Affichage de l'écran demandé
-      //lcd_vent
+      lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val, sondes[screens - 1]->ventilos[0]->name, PWM_to_percent( sondes[screens - 1]->ventilos[0]->curent_PWM) ); //Affichage de l'écran demandé
+      //lcd_print_sonde(sondes[screens - 1]);
     }
 
     yazop=0;
@@ -524,7 +524,7 @@ void lcd_temp_draw (void) {
   if (digitalRead(btn_refrsh) == HIGH) {
 
     if (screens > 0){
-      lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val, ventilos[screens - 1]->name, PWM_to_percent( ventilos[screens - 1]->curent_PWM) );
+      lcd_set(sondes[screens - 1]->name, sondes[screens - 1]->val, sondes[screens - 1]->ventilos[0]->name, PWM_to_percent( sondes[screens - 1]->ventilos[0]->curent_PWM) );
 
 
       #if DEBUG 
