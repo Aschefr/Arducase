@@ -568,10 +568,6 @@ void setup (void)
   init_thermals();
 
 
-  Alarm.timerRepeat(1, set_mode);
-  Alarm.timerRepeat(1, lcd_temp_draw);
-  Alarm.timerRepeat(1, thermals_save);
-
 }
 // _______________________________________ Setup _______________________________________
 
