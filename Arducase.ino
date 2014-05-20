@@ -258,7 +258,6 @@ void init_thermals(){
   add_ventilo_to_sonde(temp_gpu          , vent_rad);
   add_ventilo_to_sonde(temp_pc_case      , vent_pc );
   add_ventilo_to_sonde(temp_tec_hot      , vent_wc );
-  add_ventilo_to_sonde(temp_tec_cold     , vent_wc );
   add_ventilo_to_sonde(temp_wtr_tec_hot  , vent_wc );
   add_ventilo_to_sonde(temp_wc_case      , vent_wc );
 
