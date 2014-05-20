@@ -495,11 +495,15 @@ void lcd_temp_draw (void) {
     yazop=0;
   }
   
-  static int last_refresh = 0;
-  if (screens > 0 && millis() - last_refresh > 500){
-    last_refresh = millis();
+  static long last_refresh = 0;
+  if (screens > 0 && (millis()/250) - last_refresh > 1){
+    last_refresh = (millis()/250);
 
     lcd_print_sonde(sondes[screens - 1]);
+
+  /*if (last_refresh > 30000)
+    last_refresh = 0;
+    */
 
     #if DEBUG 
       Serial.print(sondes[screens - 1]->name);
@@ -509,6 +513,9 @@ void lcd_temp_draw (void) {
 
       Serial.print("millis_func = ");
       Serial.println(millis());
+
+      Serial.print("last_refresh = ");
+      Serial.println(last_refresh);
 
       for (int i = 0; i < sondes[screens - 1]->nb_ventilos; ++i){
 
