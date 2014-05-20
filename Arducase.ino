@@ -354,6 +354,74 @@ void lcd_print_sonde (struct Termal_sensor* sensor){
 //=============================================================================================================//
 
 
+
+
+
+//============================================================================================================//
+// ___________________________________________ CAMERAS __________________________________________________
+#define MAX_CAM 5 //Nombre de cameras de régulation maximum
+typedef struct Camera { //définition d'une structure qui comporte :
+  int pin_button; //le pin du bouton
+  int pin_led; //le pin de la led
+  char *name; //le nom de la caméra
+  //int pin_camera; // pourcentage min des ventilateurs dans le camera
+} Camera;
+
+// Définition des cameras  (déclaration des variables pour chaque camera)
+Camera camera1;
+Camera camera2;
+Camera camera3;
+Camera camera4;
+
+//Camera *selected_cam = camera1; // Variable de type "pointeur" vers le camera selectionné.
+
+Camera *cameras[MAX_CAM]; // Tableau de pointeur vers l'objet "Camera", ou plutôt un tableau de pointeur vers les objets "Camera", sert à lister tout les cameras, en faire l'inventaire.
+int nb_cam = 0; //Variable pour compter le nombre de caméras, utilisé plus bas
+
+
+/*
+ * Fonction permetant de créer un "camera" et initialiser l'objet avec les propriétés définies plus bas dans "Gestion des Cameras"
+ */
+void create_camera(struct Camera &camera, int pin_button, int pin_led, char *name){
+  if (nb_cam + 1 > MAX_CAM){ //Si nb_cam + 1 est supérieur au nombre de camera maxi,
+    return; //Arrête la fonction, ne retourne rien.
+  }
+
+  //Sinon,
+  cameras[nb_cam] = &camera; // ajout du camera dans l'invertaire de tous les cameras
+  nb_cam++; //Incrémenter de 1 "nb_cam"
+
+  camera.pin_button = pin_button; //Stocker dans "pin_button" qui se trouve dans "camera" la valeur de "pin_button" -> celle lu plus bas dans "Gestion des Cameras"
+  camera.pin_led = pin_led; //Pareil
+  camera.name = name; //Idem
+  //camera.pin_camera = pin_camera; //Idem
+
+
+  pinMode(camera.pin_button, INPUT); //définir le pin du bouton comme une entrée
+  pinMode(camera.pin_led, OUTPUT); //et le pin de la led comme une sortie, sinon ça marche pas.
+  //pinMode(camera.pin_camera, OUTPUT); //et le pin de la caméra comme une sortie.
+
+}
+
+void init_cameras(){
+
+  // _________________________________ Gestion des Cameras _____________________________________________
+  //          variable      btn led    nom        min  max
+  create_camera(camera1   , 31, 30, "Camera PC"         ); //
+  create_camera(camera2   , 33, 32, "Cam Radiateur"     ); //
+  create_camera(camera3   , 35, 34, "Cam watercase 1"   ); //
+  create_camera(camera4   , 37, 36, "Cam watercase 2"   ); //
+
+  // alume la led du camera selectionné dès le debut
+  //digitalWrite(selected_cam->pin_led, HIGH);
+}
+// ___________________________________________ CAMERAS __________________________________________________
+//============================================================================================================//
+
+
+
+
+
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
 
 // -------------------------------------------------------------------------------- Choix de la caméra :
@@ -535,6 +603,7 @@ void lcd_temp_draw (void) {
 
 
 
+
 // _______________________________________ Setup _______________________________________
 void setup (void)
 {
@@ -576,6 +645,7 @@ void setup (void)
   init_modes();
   init_ventilos();
   init_thermals();
+  init_cameras();
 
 
 }
