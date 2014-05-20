@@ -507,6 +507,9 @@ void lcd_temp_draw (void) {
       Serial.print(sondes[screens - 1]->val);
       Serial.println(" °C");
 
+      Serial.print("millis_func = ");
+      Serial.println(millis());
+
       for (int i = 0; i < sondes[screens - 1]->nb_ventilos; ++i){
 
         Serial.print("=> ");
