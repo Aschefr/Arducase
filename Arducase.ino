@@ -358,6 +358,56 @@ void lcd_print_sonde (struct Termal_sensor* sensor){
 
 
 //============================================================================================================//
+// ___________________________________________ PELTIERS __________________________________________________
+#define MAX_TEC 6
+typedef struct Peltier{
+  int pin_out;
+  char *name;
+} Peltier;
+
+Peltier tec_0_1;
+Peltier tec_2;
+Peltier tec_3;
+Peltier tec_4;
+Peltier tec_5;
+
+Peltier *peltiers[MAX_TEC];
+int nb_peltier = 0;
+
+
+void create_peltier(struct Peltier &peltier, int pin_out, char *name){
+  if (nb_peltier + 1 > MAX_TEC){
+    return;
+  }
+
+peltiers[nb_peltier] = &peltier;
+nb_peltier++;
+
+peltier.pin_out = pin_out;
+peltier.name = name;
+
+pinMode(peltier.pin_out, OUTPUT);
+
+}
+
+void init_peltiers(){
+//        variable           Pin   Nom
+  create_peltier(tec_0_1    , 42 , "1, 2");
+  create_peltier(tec_2      , 42 , "3"   );
+  create_peltier(tec_3      , 42 , "4"   );
+  create_peltier(tec_4      , 42 , "5"   );
+  create_peltier(tec_5      , 42 , "6"   );
+
+}
+// ___________________________________________ PELTIERS __________________________________________________
+//============================================================================================================//
+
+
+
+
+
+
+//============================================================================================================//
 // ___________________________________________ CAMERAS __________________________________________________
 #define MAX_CAM 5 //Nombre de cameras de régulation maximum
 typedef struct Camera { //définition d'une structure qui comporte :
@@ -424,29 +474,15 @@ void init_cameras(){
 
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
 
-// -------------------------------------------------------------------------------- Choix de la caméra :
-const int btn_cam1 = 31; //Bouton pour choix caméra 1
-const int btn_cam2 = 31; //Bouton pour choix caméra 2
-const int btn_cam3 = 31; //Bouton pour choix caméra 3
-const int btn_cam4 = 31; //Bouton pour choix caméra 4
 
-const int led_cam1 = 30; //Led du bouton Caméra 1
-const int led_cam2 = 32; //Led du bouton caméra 2
-const int led_cam3 = 34; //Led du bouton caméra 3
-const int led_cam4 = 36; //Led du bouton caméra 4
-
-const int activ_cam1 = 44; //Sortie pour activation caméra 1
-const int activ_cam2 = 46; //Sortie pour activation caméra 2
-const int activ_cam3 = 48; //Sortie pour activation caméra 3
-const int activ_cam4 = 50; //Sortie pour activation caméra 4
 
 
 // ------------------------------------------------------------------------------------ Défilement LCD :
 const int btn_next = 39; //Bouton Next LCD
-const int btn_refrsh = 41; //Bouton Refresh LCD
+const int btn_prev = 41; //Bouton Prev LCD
 
 const int led_next = 38; //Led du bouton Next
-const int led_refrsh = 40; //Led du bouton Refresh
+const int led_prev = 40; //Led du bouton Prev
 
 // --------------------------------------------------------------------------------- Mode Auto ou Manu :
 const int sw_cooling_auto = 43; //Entrée switch cooling mode Auto ou Manu, Manu = 0, Auto = 1
@@ -646,6 +682,7 @@ void setup (void)
   init_ventilos();
   init_thermals();
   init_cameras();
+  init_peltiers();
 
 
 }
