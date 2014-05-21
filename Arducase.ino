@@ -117,8 +117,8 @@ void create_ventilo(struct Ventilo &ventilo, int pin, char *name){
 
   ventilo.pin = pin;
   ventilo.name = name;
-  ventilo.curent_PWM = 0; // ???
-  ventilo.last_PWM = 0; // ???
+  ventilo.curent_PWM = 0;
+  ventilo.last_PWM = 0; 
 }
 
 void init_ventilos(){
@@ -380,13 +380,13 @@ void create_peltier(struct Peltier &peltier, int pin_out, char *name){
     return;
   }
 
-peltiers[nb_peltier] = &peltier;
-nb_peltier++;
+  peltiers[nb_peltier] = &peltier;
+  nb_peltier++;
 
-peltier.pin_out = pin_out;
-peltier.name = name;
+  peltier.pin_out = pin_out;
+  peltier.name = name;
 
-pinMode(peltier.pin_out, OUTPUT);
+  pinMode(peltier.pin_out, OUTPUT);
 
 }
 
@@ -414,6 +414,7 @@ typedef struct Camera { //définition d'une structure qui comporte :
   int pin_button; //le pin du bouton
   int pin_led; //le pin de la led
   char *name; //le nom de la caméra
+  int groupe;
   //int pin_camera; // pourcentage min des ventilateurs dans le camera
 } Camera;
 
@@ -432,7 +433,7 @@ int nb_cam = 0; //Variable pour compter le nombre de caméras, utilisé plus bas
 /*
  * Fonction permetant de créer un "camera" et initialiser l'objet avec les propriétés définies plus bas dans "Gestion des Cameras"
  */
-void create_camera(struct Camera &camera, int pin_button, int pin_led, char *name){
+void create_camera(struct Camera &camera, int pin_button, int pin_led, char *name, int groupe){
   if (nb_cam + 1 > MAX_CAM){ //Si nb_cam + 1 est supérieur au nombre de camera maxi,
     return; //Arrête la fonction, ne retourne rien.
   }
@@ -444,6 +445,7 @@ void create_camera(struct Camera &camera, int pin_button, int pin_led, char *nam
   camera.pin_button = pin_button; //Stocker dans "pin_button" qui se trouve dans "camera" la valeur de "pin_button" -> celle lu plus bas dans "Gestion des Cameras"
   camera.pin_led = pin_led; //Pareil
   camera.name = name; //Idem
+  camera.groupe = groupe;
   //camera.pin_camera = pin_camera; //Idem
 
 
@@ -456,11 +458,11 @@ void create_camera(struct Camera &camera, int pin_button, int pin_led, char *nam
 void init_cameras(){
 
   // _________________________________ Gestion des Cameras _____________________________________________
-  //          variable      btn led    nom        min  max
-  create_camera(camera1   , 31, 30, "Camera PC"         ); //
-  create_camera(camera2   , 33, 32, "Cam Radiateur"     ); //
-  create_camera(camera3   , 35, 34, "Cam watercase 1"   ); //
-  create_camera(camera4   , 37, 36, "Cam watercase 2"   ); //
+  //          variable      btn led    nom               groupe
+  create_camera(camera1   , 31, 30, "Camera PC"         ,1 ); //
+  create_camera(camera2   , 33, 32, "Cam Radiateur"     ,1 ); //
+  create_camera(camera3   , 35, 34, "Cam watercase 1"   ,2 ); //
+  create_camera(camera4   , 37, 36, "Cam watercase 2"   ,2 ); //
 
   // alume la led du camera selectionné dès le debut
   //digitalWrite(selected_cam->pin_led, HIGH);
@@ -599,7 +601,7 @@ void lcd_temp_draw (void) {
     yazop=0;
   }
   
-  static long last_refresh = 0;
+  static long unsigned last_refresh = 0;
   if (screens > 0 && (millis()/250) - last_refresh > 1){
     last_refresh = (millis()/250);
 
