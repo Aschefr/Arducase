@@ -291,7 +291,8 @@ void init_cameras(){
 //
 
 
-void set_mode (void) { 
+
+void set_camera (void) { 
 
   int nb_appuye = 0;
   Camera *camera_appuye;
@@ -302,8 +303,8 @@ void set_mode (void) {
     }
   }
 
-  // si on a bien un ou deux boutons appuyé
-  if (camera_appuye <= 2){
+  // si on a bien un boutons appuyé
+  if (nb_appuye <= 2){
     // on set le mode actuel
     selected_camera = camera_appuye;
 
@@ -418,7 +419,7 @@ void add_ventilo_to_sonde(struct Termal_sensor &sensor, struct Ventilo &ventilo)
 
 }
 
-void add_ventilo_to_cam(struct Termal_sensor &sensor, struct Camera &camera){ //Ajout du ventilateur à la caméra correspondante à allumé lorsque celui-ci se mets en route.
+void add_ventilo_to_cam(struct Ventilo &ventilo, struct Camera &camera){ //Ajout du ventilateur à la caméra correspondante à allumé lorsque celui-ci se mets en route.
   if( sensor.nb_ventilos + 1 > MAX_CAM ){
     return;
   }
