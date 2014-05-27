@@ -393,10 +393,10 @@ pinMode(peltier.pin_out, OUTPUT);
 void init_peltiers(){
 //        variable           Pin   Nom
   create_peltier(tec_0_1    , 42 , "1, 2");
-  create_peltier(tec_2      , 42 , "3"   );
-  create_peltier(tec_3      , 42 , "4"   );
-  create_peltier(tec_4      , 42 , "5"   );
-  create_peltier(tec_5      , 42 , "6"   );
+  create_peltier(tec_2      , 44 , "3"   );
+  create_peltier(tec_3      , 46 , "4"   );
+  create_peltier(tec_4      , 48 , "5"   );
+  create_peltier(tec_5      , 50 , "6"   );
 
 }
 // ___________________________________________ PELTIERS __________________________________________________
@@ -414,7 +414,8 @@ typedef struct Camera { //définition d'une structure qui comporte :
   int pin_button; //le pin du bouton
   int pin_led; //le pin de la led
   char *name; //le nom de la caméra
-  //int pin_camera; // pourcentage min des ventilateurs dans le camera
+  int groupe;
+  //int pin_camera; 
 } Camera;
 
 // Définition des cameras  (déclaration des variables pour chaque camera)
@@ -432,7 +433,7 @@ int nb_cam = 0; //Variable pour compter le nombre de caméras, utilisé plus bas
 /*
  * Fonction permetant de créer un "camera" et initialiser l'objet avec les propriétés définies plus bas dans "Gestion des Cameras"
  */
-void create_camera(struct Camera &camera, int pin_button, int pin_led, char *name){
+void create_camera(struct Camera &camera, int pin_button, int pin_led, char *name, int groupe){
   if (nb_cam + 1 > MAX_CAM){ //Si nb_cam + 1 est supérieur au nombre de camera maxi,
     return; //Arrête la fonction, ne retourne rien.
   }
@@ -444,6 +445,7 @@ void create_camera(struct Camera &camera, int pin_button, int pin_led, char *nam
   camera.pin_button = pin_button; //Stocker dans "pin_button" qui se trouve dans "camera" la valeur de "pin_button" -> celle lu plus bas dans "Gestion des Cameras"
   camera.pin_led = pin_led; //Pareil
   camera.name = name; //Idem
+  camera.groupe = groupe;
   //camera.pin_camera = pin_camera; //Idem
 
 
@@ -456,17 +458,59 @@ void create_camera(struct Camera &camera, int pin_button, int pin_led, char *nam
 void init_cameras(){
 
   // _________________________________ Gestion des Cameras _____________________________________________
-  //          variable      btn led    nom        min  max
-  create_camera(camera1   , 31, 30, "Camera PC"         ); //
-  create_camera(camera2   , 33, 32, "Cam Radiateur"     ); //
-  create_camera(camera3   , 35, 34, "Cam watercase 1"   ); //
-  create_camera(camera4   , 37, 36, "Cam watercase 2"   ); //
+  //          variable      btn led    nom             groupe
+  create_camera(camera1   , 31, 30, "Camera PC"        ,1 ); //
+  create_camera(camera2   , 33, 32, "Cam Radiateur"    ,1 ); //
+  create_camera(camera3   , 35, 34, "Cam watercase 1"  ,2 ); //
+  create_camera(camera4   , 37, 36, "Cam watercase 2"  ,2 ); //
 
   // alume la led du camera selectionné dès le debut
   //digitalWrite(selected_cam->pin_led, HIGH);
 }
 // ___________________________________________ CAMERAS __________________________________________________
 //============================================================================================================//
+
+// __________ Gestion caméra avec affiche sur LCD __________
+//
+
+
+void set_mode (void) { 
+
+  int nb_appuye = 0;
+  Camera *camera_appuye;
+  for (int i = 0; i < nb_cam; ++i){
+    if ((digitalRead(cameras[i]->pin_button) == HIGH) && ((digitalRead(cameras[i]->groupe) == 1) || (digitalRead(cameras[i]->groupe) == 2))){
+      nb_appuye++;
+      camera_appuye = cameras[i];
+    }
+  }
+
+  // si on a bien un ou deux boutons appuyé
+  if (camera_appuye <= 2){
+    // on set le mode actuel
+    selected_camera = camera_appuye;
+
+    // on eteinds toutes les leds
+    for (int i = 0; i < nb_cam; ++i){
+      digitalWrite(cameras[i]->pin_led, LOW);
+    }
+    // on ralume le mode selectionné
+    digitalWrite(selected_camera->pin_led, HIGH);
+
+    // on affiche engage
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(selected_camera->name);
+    lcd.setCursor(0, 1);
+    lcd.print("Load");
+
+    delay(1000);
+    lcd.clear();
+  }
+}
+
+
+// __________ Gestion caméra avec affiche sur LCD __________
 
 
 
