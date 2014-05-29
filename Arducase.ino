@@ -268,13 +268,10 @@ void create_camera(struct Camera &camera, int pin_button, int pin_led, char *nam
   camera.pin_led = pin_led; //Pareil
   camera.name = name; //Idem
   camera.groupe = groupe;
-  //camera.pin_camera = pin_camera; //Idem
 
 
   pinMode(camera.pin_button, INPUT); //définir le pin du bouton comme une entrée
   pinMode(camera.pin_led, OUTPUT); //et le pin de la led comme une sortie, sinon ça marche pas.
-  //pinMode(camera.pin_camera, OUTPUT); //et le pin de la caméra comme une sortie.
-
 }
 
 void init_cameras(){
@@ -305,33 +302,34 @@ void init_cameras(){
 
 
 
-void set_camera(void) { 
+void set_camera(void) {
 
   int nb_appuye = 0;
   Camera *camera_appuye;
   for (int i = 0; i < nb_cam; ++i){
-    if ((digitalRead(cameras[i]->pin_button) == HIGH) && ((digitalRead(cameras[i]->groupe) == 1) || (digitalRead(cameras[i]->groupe) == 2))){
+    if (digitalRead(cameras[i]->pin_button) == HIGH){
       nb_appuye++;
       camera_appuye = cameras[i];
     }
   }
 
   // si on a bien un boutons appuyé
-  if (nb_appuye <= 2){
-    // on set le mode actuel
-    Camera *selected_camera = camera_appuye;
+  if (nb_appuye == 1){
 
-    // on eteinds toutes les leds
+    // on eteinds toutes les leds du même groupe
     for (int i = 0; i < nb_cam; ++i){
-      digitalWrite(cameras[i]->pin_led, LOW);
+      if (cameras[i]->groupe == camera_appuye->groupe){
+        digitalWrite(cameras[i]->pin_led, LOW);
+      }
     }
-    // on ralume le mode selectionné
-    digitalWrite(selected_camera->pin_led, HIGH);
 
-    // on affiche engage
+    // on ralume la camera appuyé
+    digitalWrite(camera_appuye->pin_led, HIGH);
+
+    // on affiche le changement de cam
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print(selected_camera->name);
+    lcd.print(camera_appuye->name);
     lcd.setCursor(0, 1);
     lcd.print("Load");
 
@@ -775,8 +773,8 @@ void setup (void)
   init_modes();
   init_ventilos();
   init_thermals();
-  //init_cameras();
-  //init_peltiers();
+  init_cameras();
+  init_peltiers();
 
 
 }
@@ -786,6 +784,7 @@ void setup (void)
 // _______________________________________ Main Loop _______________________________________
 void loop (void) {
   set_mode();
+  set_camera();
   lcd_temp_draw();
   thermals_save();
 }
