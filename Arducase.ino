@@ -16,7 +16,7 @@ LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 #define percent_to_PWM(val) ((val * 255)/100) //Conversion d'un pourcentage en un signal de sortie Arduino 0-255pt, en l'occurence pour le contrôle d'une PWM
 #define PWM_to_percent(val) ((val * 100)/255) //Exactement l'inverse
 
-#define MAX_CAM 5 //Nombre de cameras de régulation maximum
+#define MAX_NB_CAM 5 //Nombre de cameras de régulation maximum
 
 // _______________________________________ HELPERS __________________________________________________
 //====================================================================================================//
@@ -98,6 +98,9 @@ typedef struct Ventilo {
 
   int curent_PWM;
   int last_PWM; // ancien curent_PWM (pour gestion du boost)
+
+  int nb_cam;
+  Camera *cameras[MAX_NB_CAM];
 } Ventilo;
 
 
@@ -120,7 +123,9 @@ void create_ventilo(struct Ventilo &ventilo, int pin, char *name){
   ventilo.pin = pin;
   ventilo.name = name;
   ventilo.curent_PWM = 0;
-  ventilo.last_PWM = 0; 
+  ventilo.last_PWM = 0;
+
+  ventilo.nb_cam = 0;
 }
 
 void init_ventilos(){
@@ -176,7 +181,7 @@ void finish_ventilo_regulation(){
 
 //============================================================================================================//
 // ___________________________________________ PELTIERS __________________________________________________
-#define MAX_TEC 6
+#define MAX_NB_TEC 6
 typedef struct Peltier{
   int pin_out;
   char *name;
@@ -188,12 +193,12 @@ Peltier tec_3;
 Peltier tec_4;
 Peltier tec_5;
 
-Peltier *peltiers[MAX_TEC];
+Peltier *peltiers[MAX_NB_TEC];
 int nb_peltier = 0;
 
 
 void create_peltier(struct Peltier &peltier, int pin_out, char *name){
-  if (nb_peltier + 1 > MAX_TEC){
+  if (nb_peltier + 1 > MAX_NB_TEC){
     return;
   }
 
@@ -243,7 +248,7 @@ Camera camera4;
 
 //Camera *selected_cam = camera1; // Variable de type "pointeur" vers le camera selectionné.
 
-Camera *cameras[MAX_CAM]; // Tableau de pointeur vers l'objet "Camera", ou plutôt un tableau de pointeur vers les objets "Camera", sert à lister tout les cameras, en faire l'inventaire.
+Camera *cameras[MAX_NB_CAM]; // Tableau de pointeur vers l'objet "Camera", ou plutôt un tableau de pointeur vers les objets "Camera", sert à lister tout les cameras, en faire l'inventaire.
 int nb_cam = 0; //Variable pour compter le nombre de caméras, utilisé plus bas
 
 
@@ -251,7 +256,7 @@ int nb_cam = 0; //Variable pour compter le nombre de caméras, utilisé plus bas
  * Fonction permetant de créer un "camera" et initialiser l'objet avec les propriétés définies plus bas dans "Gestion des Cameras"
  */
 void create_camera(struct Camera &camera, int pin_button, int pin_led, char *name, int groupe){
-  if (nb_cam + 1 > MAX_CAM){ //Si nb_cam + 1 est supérieur au nombre de camera maxi,
+  if (nb_cam + 1 > MAX_NB_CAM){ //Si nb_cam + 1 est supérieur au nombre de camera maxi,
     return; //Arrête la fonction, ne retourne rien.
   }
 
@@ -281,6 +286,14 @@ void init_cameras(){
   create_camera(camera3   , 35, 34, "Cam radiateur"    ,2 ); //
   create_camera(camera4   , 37, 36, "Cam watercase 2"  ,2 ); //
 
+
+  // _________________________________ Association des cameras avec les ventilos _____________________________________________
+  //                  cam        ventilos
+  add_cam_to_ventilo(camera1   , vent_pc);
+  add_cam_to_ventilo(camera2   , vent_rad);
+  add_cam_to_ventilo(camera3   , vent_wc);
+
+
   // alume la led du camera selectionné dès le debut
   //digitalWrite(selected_cam->pin_led, HIGH);
 }
@@ -292,7 +305,7 @@ void init_cameras(){
 
 
 
-void set_camera (void) { 
+void set_camera(void) { 
 
   int nb_appuye = 0;
   Camera *camera_appuye;
@@ -306,7 +319,7 @@ void set_camera (void) {
   // si on a bien un boutons appuyé
   if (nb_appuye <= 2){
     // on set le mode actuel
-    selected_camera = camera_appuye;
+    Camera *selected_camera = camera_appuye;
 
     // on eteinds toutes les leds
     for (int i = 0; i < nb_cam; ++i){
@@ -362,10 +375,6 @@ typedef struct Termal_sensor {
   Ventilo* ventilos[MAX_NB_VENTILO];
   int nb_ventilos;
 
-  //Camera associé à cette sonde
-  Camera* cameras[MAX_CAM];
-  int nb_cameras;
-
 } Termal_sensor;
 
 
@@ -419,13 +428,13 @@ void add_ventilo_to_sonde(struct Termal_sensor &sensor, struct Ventilo &ventilo)
 
 }
 
-void add_ventilo_to_cam(struct Ventilo &ventilo, struct Camera &camera){ //Ajout du ventilateur à la caméra correspondante à allumé lorsque celui-ci se mets en route.
-  if( sensor.nb_ventilos + 1 > MAX_CAM ){
+void add_cam_to_ventilo(struct Camera &camera, struct Ventilo &ventilo){ //Ajout du ventilateur à la caméra correspondante à allumé lorsque celui-ci se mets en route.
+  if( ventilo.nb_cam + 1 > MAX_NB_CAM ){
     return;
   }
 
-  sensor.cameras[ sensor.nb_cam ] = &camera;
-  sensor.nb_cam ++;
+  ventilo.cameras[ ventilo.nb_cam ] = &camera;
+  ventilo.nb_cam ++;
 
 }
 
@@ -455,12 +464,6 @@ void init_thermals(){
   add_ventilo_to_sonde(temp_wtr_tec_hot  , vent_wc );
   add_ventilo_to_sonde(temp_wc_case      , vent_wc );
 
-  // _________________________________ Association des cameras avec les ventilos _____________________________________________
-  //                   sonde              ventilos
-  
-  add_ventilo_to_cam(temp_pc_case      , vent_pc);
-  add_ventilo_to_cam(temp_wtr_out_pc   , vent_rad);
-  add_ventilo_to_cam(temp_wc_case      , vent_wc);
 
   thermals_save();
 }
@@ -560,125 +563,8 @@ void lcd_print_sonde (struct Termal_sensor* sensor){
 
 
 
-<<<<<<< HEAD
-=======
-//============================================================================================================//
-// ___________________________________________ PELTIERS __________________________________________________
-#define MAX_TEC 6
-typedef struct Peltier{
-  int pin_out;
-  char *name;
-} Peltier;
-
-Peltier tec_0_1;
-Peltier tec_2;
-Peltier tec_3;
-Peltier tec_4;
-Peltier tec_5;
-
-Peltier *peltiers[MAX_TEC];
-int nb_peltier = 0;
 
 
-void create_peltier(struct Peltier &peltier, int pin_out, char *name){
-  if (nb_peltier + 1 > MAX_TEC){
-    return;
-  }
-
-  peltiers[nb_peltier] = &peltier;
-  nb_peltier++;
-
-  peltier.pin_out = pin_out;
-  peltier.name = name;
-
-  pinMode(peltier.pin_out, OUTPUT);
-
-}
-
-void init_peltiers(){
-//        variable           Pin   Nom
-  create_peltier(tec_0_1    , 42 , "1, 2");
-  create_peltier(tec_2      , 42 , "3"   );
-  create_peltier(tec_3      , 42 , "4"   );
-  create_peltier(tec_4      , 42 , "5"   );
-  create_peltier(tec_5      , 42 , "6"   );
-
-}
-// ___________________________________________ PELTIERS __________________________________________________
-//============================================================================================================//
-
-
-
-
-
-
-//============================================================================================================//
-// ___________________________________________ CAMERAS __________________________________________________
-#define MAX_CAM 5 //Nombre de cameras de régulation maximum
-typedef struct Camera { //définition d'une structure qui comporte :
-  int pin_button; //le pin du bouton
-  int pin_led; //le pin de la led
-  char *name; //le nom de la caméra
-  int groupe;
-  //int pin_camera; // pourcentage min des ventilateurs dans le camera
-} Camera;
-
-// Définition des cameras  (déclaration des variables pour chaque camera)
-Camera camera1;
-Camera camera2;
-Camera camera3;
-Camera camera4;
-
-//Camera *selected_cam = camera1; // Variable de type "pointeur" vers le camera selectionné.
-
-Camera *cameras[MAX_CAM]; // Tableau de pointeur vers l'objet "Camera", ou plutôt un tableau de pointeur vers les objets "Camera", sert à lister tout les cameras, en faire l'inventaire.
-int nb_cam = 0; //Variable pour compter le nombre de caméras, utilisé plus bas
-
-
-/*
- * Fonction permetant de créer un "camera" et initialiser l'objet avec les propriétés définies plus bas dans "Gestion des Cameras"
- */
-void create_camera(struct Camera &camera, int pin_button, int pin_led, char *name, int groupe){
-  if (nb_cam + 1 > MAX_CAM){ //Si nb_cam + 1 est supérieur au nombre de camera maxi,
-    return; //Arrête la fonction, ne retourne rien.
-  }
-
-  //Sinon,
-  cameras[nb_cam] = &camera; // ajout du camera dans l'invertaire de tous les cameras
-  nb_cam++; //Incrémenter de 1 "nb_cam"
-
-  camera.pin_button = pin_button; //Stocker dans "pin_button" qui se trouve dans "camera" la valeur de "pin_button" -> celle lu plus bas dans "Gestion des Cameras"
-  camera.pin_led = pin_led; //Pareil
-  camera.name = name; //Idem
-  camera.groupe = groupe;
-  //camera.pin_camera = pin_camera; //Idem
-
-
-  pinMode(camera.pin_button, INPUT); //définir le pin du bouton comme une entrée
-  pinMode(camera.pin_led, OUTPUT); //et le pin de la led comme une sortie, sinon ça marche pas.
-  //pinMode(camera.pin_camera, OUTPUT); //et le pin de la caméra comme une sortie.
-
-}
-
-void init_cameras(){
-
-  // _________________________________ Gestion des Cameras _____________________________________________
-  //          variable      btn led    nom               groupe
-  create_camera(camera1   , 31, 30, "Camera PC"         ,1 ); //
-  create_camera(camera2   , 33, 32, "Cam Radiateur"     ,1 ); //
-  create_camera(camera3   , 35, 34, "Cam watercase 1"   ,2 ); //
-  create_camera(camera4   , 37, 36, "Cam watercase 2"   ,2 ); //
-
-  // alume la led du camera selectionné dès le debut
-  //digitalWrite(selected_cam->pin_led, HIGH);
-}
-// ___________________________________________ CAMERAS __________________________________________________
-//============================================================================================================//
-
-
-
-
->>>>>>> 181eb4135c013686f99decc0dc5f30089145cfba
 
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
 
