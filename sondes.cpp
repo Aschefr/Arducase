@@ -124,6 +124,7 @@ void read_and_convert_termal_sensor(struct Termal_sensor &sensor){
   else if( sensor.val > sensor.seuil_bas){
 
     int output_PWM = map(sensor.val, sensor.seuil_bas, sensor.seuil_haut, percent_to_PWM(selected_mode->pourcentage_min) , percent_to_PWM(selected_mode->pourcentage_max) );
+    Serial.println(Toutput_PWM);
 
 
     for (int i = 0; i < sensor.nb_ventilos; ++i) {
