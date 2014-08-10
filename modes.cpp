@@ -47,9 +47,9 @@ void init_modes(){
 
   // _________________________________ Gestion des Modes _____________________________________________
   //          variable        btn led    nom        min  max
-  create_mode(mode_silent   , 23, 22, "Silent"    , 0  , 30  ); //En mode Silent, pourcentage de marche ventilateur maximal
+  create_mode(mode_silent   , 23, 22, "Silent"    , 10 , 30  ); //En mode Silent, pourcentage de marche ventilateur maximal
   create_mode(mode_normal   , 25, 24, "Normal"    , 30 , 50  ); //En mode Normal, pourcentage de marche ventilateur maximal
-  create_mode(mode_heavy    , 27, 26, "Heavy"     , 50 , 70  ); //En mode Heavy, pourcentage de marche ventilateur maximal
+  create_mode(mode_heavy    , 27, 26, "Heavy"     , 50 , 100  ); //En mode Heavy, pourcentage de marche ventilateur maximal
   create_mode(mode_extreme  , 29, 28, "Extreme"   , 70 , 100 ); //En mode Extreme, pourcentage de marche ventilateur maximal
 
   // alume la led du mode selectionné dès le debut
