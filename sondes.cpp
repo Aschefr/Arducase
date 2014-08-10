@@ -12,6 +12,11 @@ extern Ventilo vent_pc;
 extern Ventilo vent_rad;
 extern Ventilo vent_wc;
 
+float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 
 // ----------------------------------------------------------------------------- Sonde de températures :
 // Définition des sondes de température
@@ -123,8 +128,8 @@ void read_and_convert_termal_sensor(struct Termal_sensor &sensor){
 
   else if( sensor.val > sensor.seuil_bas){
 
-    int output_PWM = map(sensor.val, sensor.seuil_bas, sensor.seuil_haut, percent_to_PWM(selected_mode->pourcentage_min) , percent_to_PWM(selected_mode->pourcentage_max) );
-    Serial.println(Toutput_PWM);
+    int output_PWM = mapfloat(sensor.val, sensor.seuil_bas, sensor.seuil_haut, percent_to_PWM(selected_mode->pourcentage_min) , percent_to_PWM(selected_mode->pourcentage_max) );
+    Serial.println(sensor.val);
 
 
     for (int i = 0; i < sensor.nb_ventilos; ++i) {
