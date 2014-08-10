@@ -100,7 +100,7 @@ void read_and_convert_termal_sensor(struct Termal_sensor &sensor){
 
   double Temp;
   // See http://en.wikipedia.org/wiki/Thermistor for explanation of formula
-  Temp = log(((10240000/sensor.raw) - 10000));
+  Temp = log(((10240000/(double)sensor.raw) - 10000));
   //Serial.println(Temp);
   Temp = 1 / (0.001129148 + (0.000234125 * Temp) + (0.0000000876741 * Temp * Temp * Temp));
   //Serial.println(Temp);
