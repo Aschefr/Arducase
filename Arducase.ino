@@ -7,6 +7,7 @@
 #include "cameras.h"
 #include "sondes.h"
 #include "peltiers.h"
+#include "vumetre.h"
 
 LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 
@@ -31,11 +32,17 @@ void set_camera(void) {
     for (int i = 0; i < nb_cam; ++i){
       if (cameras[i]->groupe == camera_appuye->groupe){
         digitalWrite(cameras[i]->pin_led, LOW);
+        if (cameras[i]->pin_led != camera_appuye->pin_led){
+          cameras[i]->current_val = 0;
+        }
       }
     }
 
-    // on ralume la camera appuyé
-    digitalWrite(camera_appuye->pin_led, HIGH);
+    // on ralume la camera appuyé si elle n'était pas déjà selectionné
+    if(camera_appuye->current_val == 0) {
+      digitalWrite(camera_appuye->pin_led, HIGH);
+    }
+    camera_appuye->current_val = 1 - camera_appuye->current_val;
 
     // on affiche le changement de cam
     lcd.clear();
@@ -65,8 +72,8 @@ const int led_prev = 40; //Led du bouton Prev
 
 // --------------------------------------------------------------------------------- Mode Auto ou Manu :
 const int sw_cooling_auto = 43; //Entrée switch cooling mode Auto ou Manu, Manu = 0, Auto = 1
-const int sw_video_auto = 43; //Entrée switch Video mode Auto ou Manu, Manu = 0, Auto = 1
-const int sw_tec = 43; //Entrée switch TEC mode On ou Off, Off = 0, On = 1
+const int sw_video_auto = 45; //Entrée switch Video mode Auto ou Manu, Manu = 0, Auto = 1
+const int sw_tec = 47; //Entrée switch TEC mode On ou Off, Off = 0, On = 1
 
 // ------------------------------------------------------------------------------------ Activation TEC :
 const int tec_relay = 42; //Sortie pour activation relais TEC
@@ -82,13 +89,6 @@ const int valve2_close = 51; //Retour d'état vanne 2 fermé
 // ---------------------------------------------------------------------------------------- Débitmetre :
 const int flowmeter_read = 53; //Lecture débit
 
-// ---------------------------------------------------------------------------------- Gestion vumetres :
-const int vu_cpu = 4; //Vumetre % cpu utilisé
-const int vu_ram = 6; //Vumetre % ram utilisé
-const int vu_eau = 7; //Vumetre eau pc en °C
-const int vu_flow = 8; //Vumetre débit eau
-const int vu_eff = 9; //Vumetre efficacité refroidissement
-const int vu_ech = 10; //Vumetre echauffement de l'eau après passage dans pc
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
 
 
@@ -262,6 +262,7 @@ void setup (void)
   init_thermals();
   init_cameras();
   init_peltiers();
+  init_vumetres();
 
 
 }
@@ -274,6 +275,8 @@ void loop (void) {
   set_camera();
   lcd_temp_draw();
   thermals_save();
+  //screenSaver();
+  handle_cpu_mem();
 }
 // _______________________________________ Main Loop _______________________________________
 

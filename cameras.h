@@ -11,7 +11,7 @@ typedef struct Camera { //définition d'une structure qui comporte :
   int pin_led; //le pin de la led
   char *name; //le nom de la caméra
   int groupe;
-  //int pin_camera; 
+  int current_val; 
 } Camera;
 
 

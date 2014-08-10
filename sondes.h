@@ -28,6 +28,8 @@ typedef struct Termal_sensor {
 extern Termal_sensor *sondes[MAX_NB_THERMAL];
 extern int nb_sondes;
 
+extern Termal_sensor temp_wtr_out_pc;
+extern Termal_sensor temp_wtr_out_pcrad;
 
 extern void thermals_save();
 

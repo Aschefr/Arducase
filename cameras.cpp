@@ -42,7 +42,7 @@ void create_camera(struct Camera &camera, int pin_button, int pin_led, char *nam
   camera.pin_led = pin_led; //Pareil
   camera.name = name; //Idem
   camera.groupe = groupe;
-
+  camera.current_val = 0;
 
   pinMode(camera.pin_button, INPUT); //définir le pin du bouton comme une entrée
   pinMode(camera.pin_led, OUTPUT); //et le pin de la led comme une sortie, sinon ça marche pas.
@@ -61,8 +61,8 @@ void init_cameras(){
   // _________________________________ Association des cameras avec les ventilos _____________________________________________
   //                  cam        ventilos
   add_cam_to_ventilo(camera1   , vent_pc);
-  add_cam_to_ventilo(camera2   , vent_rad);
-  add_cam_to_ventilo(camera3   , vent_wc);
+  add_cam_to_ventilo(camera2   , vent_wc);
+  add_cam_to_ventilo(camera3   , vent_rad);
 
 
   // alume la led du camera selectionné dès le debut
