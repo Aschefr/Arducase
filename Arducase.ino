@@ -71,6 +71,46 @@ else if (digitalRead(sw_video_auto) == 1) { //Mode Auto
 
 }
 
+// ________________________________ Gestion vannes _______________________________________
+
+// Controlling a servo position using a potentiometer (variable resistor) 
+// by Michal Rinott <http://people.interaction-ivrea.it/m.rinott> 
+
+#include <Servo.h> 
+ 
+Servo servo_valve1;  // create servo object to control a servo 
+Servo servo_valve2;  // create servo object to control a servo 
+ 
+//const int servo_valve1 = 11; //Gestion du servo de vanne 1
+//const int servo_valve2 = 12; //Gestion du servo de vanne 2
+int val;    // variable to read the value from the analog pin
+int cmd_value;
+ 
+void setup() 
+{ 
+  servo_valve1.attach(11);  // attaches the servo on pin 9 to the servo object 
+  servo_valve1.attach(12);
+} 
+ 
+void loop() 
+{ 
+  val = cmd_value;            // reads the value of the potentiometer (value between 0 and 1023) 
+  val = map(val, 0, 1023, 0, 179);     // scale it to use it with the servo (value between 0 and 180) 
+  myservo.write(val);                  // sets the servo position according to the scaled value 
+  delay(15);                           // waits for the servo to get there 
+} 
+
+
+// ________________________________ Gestion vannes _______________________________________
+
+
+
+
+
+
+
+
+
 
 
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
@@ -95,8 +135,6 @@ const int tec_relay = 42; //Sortie pour activation relais TEC
 const int tec_pump = 52; //Sortie pour pompe refroidissement TEC face chaude.
 
 // ----------------------------------------------------------------------------- Gestion electrovannes :
-const int servo_valve1 = 11; //Gestion du servo de vanne 1
-const int servo_valve2 = 12; //Gestion du servo de vanne 2
 
 const int valve1_close = 49; //Retour d'état vanne 1 fermé
 const int valve2_close = 51; //Retour d'état vanne 2 fermé
