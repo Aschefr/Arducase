@@ -16,44 +16,59 @@ LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 
 void set_camera(void) {
 
-  int nb_appuye = 0;
-  Camera *camera_appuye;
-  for (int i = 0; i < nb_cam; ++i){
-    if (digitalRead(cameras[i]->pin_button) == HIGH){
-      nb_appuye++;
-      camera_appuye = cameras[i];
-    }
-  }
+if (digitalRead(sw_video_auto) == 0) { //Mode Manuel
 
-  // si on a bien un boutons appuyé
-  if (nb_appuye == 1){
-
-    // on eteinds toutes les leds du même groupe
+    int nb_appuye = 0;
+    Camera *camera_appuye;
     for (int i = 0; i < nb_cam; ++i){
-      if (cameras[i]->groupe == camera_appuye->groupe){
-        digitalWrite(cameras[i]->pin_led, LOW);
-        if (cameras[i]->pin_led != camera_appuye->pin_led){
-          cameras[i]->current_val = 0;
-        }
+      if (digitalRead(cameras[i]->pin_button) == HIGH){
+        nb_appuye++;
+        camera_appuye = cameras[i];
       }
     }
 
-    // on ralume la camera appuyé si elle n'était pas déjà selectionné
-    if(camera_appuye->current_val == 0) {
-      digitalWrite(camera_appuye->pin_led, HIGH);
+    // si on a bien un boutons appuyé
+    if (nb_appuye == 1){
+
+      // on eteinds toutes les leds du même groupe
+      for (int i = 0; i < nb_cam; ++i){
+        if (cameras[i]->groupe == camera_appuye->groupe){
+          digitalWrite(cameras[i]->pin_led, LOW);
+          if (cameras[i]->pin_led != camera_appuye->pin_led){
+            cameras[i]->current_val = 0;
+          }
+        }
+      }
+
+      // on ralume la camera appuyé si elle n'était pas déjà selectionné
+      if(camera_appuye->current_val == 0) {
+        digitalWrite(camera_appuye->pin_led, HIGH);
+      }
+      camera_appuye->current_val = 1 - camera_appuye->current_val;
+
+      // on affiche le changement de cam
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print(camera_appuye->name);
+      //lcd.setCursor(0, 1);
+      //lcd.print("Load");
+
+      delay(500);
+      lcd.clear();
     }
-    camera_appuye->current_val = 1 - camera_appuye->current_val;
-
-    // on affiche le changement de cam
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print(camera_appuye->name);
-    lcd.setCursor(0, 1);
-    lcd.print("Load");
-
-    delay(1000);
-    lcd.clear();
   }
+
+else if (digitalRead(sw_video_auto) == 1) { //Mode Auto
+
+  if (sensor.nb_ventilos-> ??? == 1)
+
+    digitalWrite(camera_appuye->pin_led, HIGH);
+
+
+
+}
+
+
 }
 
 
@@ -129,7 +144,7 @@ void set_mode (void) {
     lcd.setCursor(0, 1);
     lcd.print("Engage");
 
-    delay(1000);
+    delay(500);
     lcd.clear();
   }
 }
