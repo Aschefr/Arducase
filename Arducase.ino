@@ -78,27 +78,40 @@ else if (digitalRead(sw_video_auto) == 1) { //Mode Auto
 
 #include <Servo.h> 
  
-Servo servo_valve1;  // create servo object to control a servo 
-Servo servo_valve2;  // create servo object to control a servo 
+Servo servo_vrad;  // create servo object to control a servo 
+Servo servo_vtec;  // create servo object to control a servo 
  
-//const int servo_valve1 = 11; //Gestion du servo de vanne 1
-//const int servo_valve2 = 12; //Gestion du servo de vanne 2
+//const int servo_vrad = 11; //Gestion du servo de vanne 1
+//const int servo_vtec = 12; //Gestion du servo de vanne 2
 int val;    // variable to read the value from the analog pin
 int cmd_value;
  
 void setup() 
 { 
-  servo_valve1.attach(11);  // attaches the servo on pin 9 to the servo object 
-  servo_valve1.attach(12);
+  servo_vrad.attach(11);  // attaches the servo on pin 9 to the servo object 
+  servo_vtec.attach(12);
 } 
  
 void loop() 
 { 
   val = cmd_value;            // reads the value of the potentiometer (value between 0 and 1023) 
-  val = map(val, 0, 1023, 0, 179);     // scale it to use it with the servo (value between 0 and 180) 
+  val = map(val, 0, 100, 0, 179);     // scale it to use it with the servo (value between 0 and 180) 
   myservo.write(val);                  // sets the servo position according to the scaled value 
   delay(15);                           // waits for the servo to get there 
 } 
+
+
+//Théorie :
+/*
+Systeme ON = Ouvrir servo_vrad 100%
+
+Si TEC switch ON et Mode heavy ou Extrem engagé (de manière auto ou Manuel) = Allumer les 2 premiers TEC (Output 42) et la pompe (Output 52),
+Quand la température entre "temp_tec_hot" et "temp_tec_cold" atteind X°C minimum = Ouvrir servo_vtec de 10% et fermer servo_vrad de 5%, si le flow associer passe hors specification = ouvrir servo_vrad à fond
+Après 10 seconde, si la température entre "temp_tec_hot" et "temp_tec_cold" est toujours de X°C minimum, recommencer l'étape précédente,
+
+
+*/
+
 
 
 // ________________________________ Gestion vannes _______________________________________
@@ -131,7 +144,7 @@ const int sw_video_auto = 45; //Entrée switch Video mode Auto ou Manu, Manu = 0
 const int sw_tec = 47; //Entrée switch TEC mode On ou Off, Off = 0, On = 1
 
 // ------------------------------------------------------------------------------------ Activation TEC :
-const int tec_relay = 42; //Sortie pour activation relais TEC
+
 const int tec_pump = 52; //Sortie pour pompe refroidissement TEC face chaude.
 
 // ----------------------------------------------------------------------------- Gestion electrovannes :
@@ -140,7 +153,9 @@ const int valve1_close = 49; //Retour d'état vanne 1 fermé
 const int valve2_close = 51; //Retour d'état vanne 2 fermé
 
 // ---------------------------------------------------------------------------------------- Débitmetre :
-const int flowmeter_read = 53; //Lecture débit
+const int flowm_rad = 11; //Lecture débit
+const int flowm_tec = 12; //Lecture débit
+
 
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
 
