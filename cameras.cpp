@@ -43,6 +43,8 @@ void create_camera(struct Camera &camera, int pin_button, int pin_led, char *nam
   camera.name = name; //Idem
   camera.groupe = groupe;
   camera.current_val = 0;
+  camera.fresh_boosted = 0;
+  camera.auto_time = 0;
 
   pinMode(camera.pin_button, INPUT); //définir le pin du bouton comme une entrée
   pinMode(camera.pin_led, OUTPUT); //et le pin de la led comme une sortie, sinon ça marche pas.
@@ -53,9 +55,9 @@ void init_cameras(){
   // _________________________________ Gestion des Cameras _____________________________________________
   //          variable      btn led    nom             groupe
   create_camera(camera1   , 31, 30, "Camera PC"        ,1 ); //
-  create_camera(camera2   , 33, 32, "Cam watercase 1"  ,1 ); //
+  create_camera(camera2   , 37, 36, "Cam watercase 1"  ,1 ); //
   create_camera(camera3   , 35, 34, "Cam radiateur"    ,2 ); //
-  create_camera(camera4   , 37, 36, "Cam watercase 2"  ,2 ); //
+  create_camera(camera4   , 33, 32, "Cam watercase 2"  ,2 ); //
 
 
   // _________________________________ Association des cameras avec les ventilos _____________________________________________

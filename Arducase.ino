@@ -12,120 +12,6 @@
 LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 
 
-
-
-void set_camera(void) {
-
-if (digitalRead(sw_video_auto) == 0) { //Mode Manuel
-
-    int nb_appuye = 0;
-    Camera *camera_appuye;
-    for (int i = 0; i < nb_cam; ++i){
-      if (digitalRead(cameras[i]->pin_button) == HIGH){
-        nb_appuye++;
-        camera_appuye = cameras[i];
-      }
-    }
-
-    // si on a bien un boutons appuyé
-    if (nb_appuye == 1){
-
-      // on eteinds toutes les leds du même groupe
-      for (int i = 0; i < nb_cam; ++i){
-        if (cameras[i]->groupe == camera_appuye->groupe){
-          digitalWrite(cameras[i]->pin_led, LOW);
-          if (cameras[i]->pin_led != camera_appuye->pin_led){
-            cameras[i]->current_val = 0;
-          }
-        }
-      }
-
-      // on ralume la camera appuyé si elle n'était pas déjà selectionné
-      if(camera_appuye->current_val == 0) {
-        digitalWrite(camera_appuye->pin_led, HIGH);
-      }
-      camera_appuye->current_val = 1 - camera_appuye->current_val;
-
-      // on affiche le changement de cam
-      lcd.clear();
-      lcd.setCursor(0, 0);
-      lcd.print(camera_appuye->name);
-      //lcd.setCursor(0, 1);
-      //lcd.print("Load");
-
-      delay(500);
-      lcd.clear();
-    }
-  }
-
-else if (digitalRead(sw_video_auto) == 1) { //Mode Auto
-
-  if (sensor.nb_ventilos-> ??? == 1)
-
-    digitalWrite(camera_appuye->pin_led, HIGH);
-
-
-
-}
-
-
-}
-
-// ________________________________ Gestion vannes _______________________________________
-
-// Controlling a servo position using a potentiometer (variable resistor) 
-// by Michal Rinott <http://people.interaction-ivrea.it/m.rinott> 
-
-#include <Servo.h> 
- 
-Servo servo_vrad;  // create servo object to control a servo 
-Servo servo_vtec;  // create servo object to control a servo 
- 
-//const int servo_vrad = 11; //Gestion du servo de vanne 1
-//const int servo_vtec = 12; //Gestion du servo de vanne 2
-int val;    // variable to read the value from the analog pin
-int cmd_value;
- 
-void setup() 
-{ 
-  servo_vrad.attach(11);  // attaches the servo on pin 9 to the servo object 
-  servo_vtec.attach(12);
-} 
- 
-void loop() 
-{ 
-  val = cmd_value;            // reads the value of the potentiometer (value between 0 and 1023) 
-  val = map(val, 0, 100, 0, 179);     // scale it to use it with the servo (value between 0 and 180) 
-  myservo.write(val);                  // sets the servo position according to the scaled value 
-  delay(15);                           // waits for the servo to get there 
-} 
-
-
-//Théorie :
-/*
-Systeme ON = Ouvrir servo_vrad 100%
-
-Si TEC switch ON et Mode heavy ou Extrem engagé (de manière auto ou Manuel) = Allumer les 2 premiers TEC (Output 42) et la pompe (Output 52),
-Quand la température entre "temp_tec_hot" et "temp_tec_cold" atteind X°C minimum = Ouvrir servo_vtec de 10% et fermer servo_vrad de 5%, si le flow associer passe hors specification = ouvrir servo_vrad à fond
-Après 10 seconde, si la température entre "temp_tec_hot" et "temp_tec_cold" est toujours de X°C minimum, recommencer l'étape précédente,
-
-
-*/
-
-
-
-// ________________________________ Gestion vannes _______________________________________
-
-
-
-
-
-
-
-
-
-
-
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
 
 
@@ -158,6 +44,133 @@ const int flowm_tec = 12; //Lecture débit
 
 
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
+
+
+void set_camera(void) {
+
+  if (digitalRead(sw_video_auto) == 0) { //Mode Manuel
+
+    int nb_appuye = 0;
+    Camera *camera_appuye;
+    for (int i = 0; i < nb_cam; ++i){
+      if (digitalRead(cameras[i]->pin_button) == HIGH){
+        nb_appuye++;
+        camera_appuye = cameras[i];
+      }
+    }
+
+    // si on a bien un boutons appuyé
+    if (nb_appuye == 1){
+
+      // on eteinds toutes les leds du même groupe
+      for (int i = 0; i < nb_cam; ++i){
+        if (cameras[i]->groupe == camera_appuye->groupe){
+          digitalWrite(cameras[i]->pin_led, LOW);
+          if (cameras[i]->pin_led != camera_appuye->pin_led){
+            cameras[i]->current_val = 0;
+          }
+        }
+      }
+
+      // on ralume la camera appuyé si elle n'était pas déjà selectionné
+      if(camera_appuye->current_val == 0) {
+        digitalWrite(camera_appuye->pin_led, HIGH);
+      }
+      camera_appuye->current_val = 1 - camera_appuye->current_val;
+
+      // on affiche le changement de cam
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.println(camera_appuye->name);
+      //lcd.setCursor(0, 1);
+      //lcd.print("Load");
+
+      delay(500);
+      lcd.clear();
+    }
+  }
+  else if (digitalRead(sw_video_auto) == 1) { //Mode Auto
+
+    unsigned long now = millis();
+
+    for (int i = 0; i < nb_cam; ++i) {
+      if( cameras[i]->fresh_boosted > 0 ) {
+
+        for (int n = 0; n < nb_cam; ++n) {
+          if ( cameras[n]->groupe == cameras[i]->groupe && n != i ){
+            cameras[n]->fresh_boosted = 0;
+            digitalWrite(cameras[n]->pin_led, LOW);
+            cameras[n]->current_val = 0;
+            cameras[n]->auto_time = 0;
+          }
+        }
+
+        digitalWrite(cameras[i]->pin_led, HIGH);
+        cameras[i]->current_val = 1;
+        cameras[i]->fresh_boosted = 0;
+        cameras[i]->auto_time = now + AUTO_TIME_CAM;
+        //Serial.println(cameras[i]->fresh_boosted);
+      }
+    }
+
+    for (int i = 0; i < nb_cam; ++i) {
+      if (cameras[i]->current_val && now > cameras[i]->auto_time){
+        digitalWrite(cameras[i]->pin_led, LOW);
+        cameras[i]->current_val = 0;
+        cameras[i]->auto_time = 0;
+      }
+    }
+  }
+
+}
+
+
+/*
+// ________________________________ Gestion vannes _______________________________________
+
+// Controlling a servo position using a potentiometer (variable resistor) 
+// by Michal Rinott <http://people.interaction-ivrea.it/m.rinott> 
+
+#include <Servo.h> 
+ 
+Servo servo_vrad;  // create servo object to control a servo 
+Servo servo_vtec;  // create servo object to control a servo 
+ 
+//const int servo_vrad = 11; //Gestion du servo de vanne 1
+//const int servo_vtec = 12; //Gestion du servo de vanne 2
+int val;    // variable to read the value from the analog pin
+int cmd_value;
+ 
+void setup() 
+{ 
+  servo_vrad.attach(11);  // attaches the servo on pin 9 to the servo object 
+  servo_vtec.attach(12);
+} 
+ 
+void loop() 
+{ 
+  val = cmd_value;            // reads the value of the potentiometer (value between 0 and 1023) 
+  val = map(val, 0, 100, 0, 179);     // scale it to use it with the servo (value between 0 and 180) 
+  myservo.write(val);                  // sets the servo position according to the scaled value 
+  delay(15);                           // waits for the servo to get there 
+} 
+
+
+//Théorie :
+/*
+Systeme ON = Ouvrir servo_vrad 100%, fermer servo_vtec 0%
+
+Si TEC switch ON et Mode heavy ou Extrem engagé (de manière auto ou Manuel) = Allumer les 2 premiers TEC (Output 42) et la pompe (Output 52),
+Quand la température entre "temp_tec_hot" et "temp_tec_cold" atteind X°C minimum = Ouvrir servo_vtec de 10% et fermer servo_vrad de 5%, 
+Après 10 seconde, si la température entre "temp_tec_hot" et "temp_tec_cold" est toujours de X°C minimum, recommencer l'étape précédente,
+
+
+*/
+
+
+// ________________________________ Gestion vannes _______________________________________
+
+
 
 
 
@@ -323,6 +336,10 @@ void setup (void)
   TCCR3B |= prescalerVal; //OR the value in TCCR0B with binary number "00000001"
   
 
+  pinMode(sw_video_auto, INPUT);
+  pinMode(sw_cooling_auto, INPUT);
+  pinMode(sw_tec, INPUT);
+
   // on initialise les modes et tout
   // l'ordre est important !!!!!
   init_modes();
@@ -340,9 +357,9 @@ void setup (void)
 // _______________________________________ Main Loop _______________________________________
 void loop (void) {
   set_mode();
-  set_camera();
   lcd_temp_draw();
   thermals_save();
+  set_camera(); // après thermal save
   //screenSaver();
   handle_cpu_mem();
 }

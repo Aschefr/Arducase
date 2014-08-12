@@ -5,13 +5,16 @@
 //============================================================================================================//
 // ___________________________________________ CAMERAS __________________________________________________
 #define MAX_NB_CAM 5 //Nombre de cameras de régulation maximum
+#define AUTO_TIME_CAM 5000 // nomber of milis for camera up
 
 typedef struct Camera { //définition d'une structure qui comporte :
   int pin_button; //le pin du bouton
   int pin_led; //le pin de la led
   char *name; //le nom de la caméra
   int groupe;
-  int current_val; 
+  int current_val;
+  int fresh_boosted;
+  unsigned long auto_time;
 } Camera;
 
 

@@ -60,6 +60,10 @@ void finish_ventilo_regulation(){
     else {
       if (ventilos[i]->last_PWM < PWM_VENTILATEUR_MIN ){ //On est juste au dessus de la capacité du ventilateur, on le démarre avec un boost à fond pendant 200ms
         analogWrite(ventilos[i]->pin, 255);
+        for (int n = 0; n < ventilos[i]->nb_cam; ++n) {
+          ventilos[i]->cameras[n]->fresh_boosted ++;
+        }
+
         nb_boost ++;
       }
       else {

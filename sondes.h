@@ -7,7 +7,7 @@
 //=============================================================================================================//
 // _______________________________________ THERMALS SENSORS __________________________________________________
 #define MAX_NB_THERMAL 10
-#define PRECISION_SONDE 0.05 // precision de la sonde en degree celsuis
+#define PRECISION_SONDE 0.5 // precision de la sonde en degree celsuis
 
 typedef struct Termal_sensor {
   int pin; // on c'est branché
