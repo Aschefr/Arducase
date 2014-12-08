@@ -161,8 +161,10 @@ void loop()
 Systeme ON = Ouvrir servo_vrad 100%, fermer servo_vtec 0%
 
 Si TEC switch ON et Mode heavy ou Extrem engagé (de manière auto ou Manuel) = Allumer les 2 premiers TEC (Output 42) et la pompe (Output 52),
-Quand la température entre "temp_tec_hot" et "temp_tec_cold" atteind X°C minimum = Ouvrir servo_vtec de 10% et fermer servo_vrad de 5%, 
+Quand la température entre "temp_tec_hot" et "temp_tec_cold" atteind 10°C minimum = Ouvrir servo_vtec de 10% et fermer servo_vrad de 5%, 
 Après 10 seconde, si la température entre "temp_tec_hot" et "temp_tec_cold" est toujours de X°C minimum, recommencer l'étape précédente,
+Si la température passe en dessous de 10°C, allumer un TEC supplémentaire
+
 
 
 */

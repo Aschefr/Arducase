@@ -45,7 +45,7 @@ void init_vumetres(){
   create_vumetre(vu_tec      , 10 , "tec"    );
 }
 
-
+// Section pour affichage CPU et MEM Usage -------------------------
 void handle_cpu_mem(){
 
   int val = 0;                  //reading
@@ -116,6 +116,6 @@ void screenSaver() {
     n = 0;
   }
 }
-
+// Section pour affichage CPU et MEM Usage -------------------------
 // ___________________________________________ VUMETRES __________________________________________________
 //============================================================================================================//

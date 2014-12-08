@@ -77,7 +77,7 @@ void finish_ventilo_regulation(){
   }
 }
 
-void add_cam_to_ventilo(struct Camera &camera, struct Ventilo &ventilo){ //Ajout du ventilateur à la caméra correspondante à allumé lorsque celui-ci se mets en route.
+void add_cam_to_ventilo(struct Camera &camera, struct Ventilo &ventilo){ //Ajout du ventilateur à la caméra correspondante à allumer lorsque celui-ci se mets en route.
   if( ventilo.nb_cam + 1 > MAX_NB_CAM ){
     return;
   }
