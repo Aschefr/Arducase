@@ -74,7 +74,7 @@ void init_thermals(){
   create_thermal(temp_tec_hot        , 7 , "tec_hot"        , 0        , 30              , 35); //température du waterblock peltier face chaude
   create_thermal(temp_tec_cold       , 8 , "tec_cold"       , 0        , 30              , 30); //température du waterblock peltier face froide
   create_thermal(temp_wtr_tec_hot    , 9 , "wtr_tec_hot"    , 0        , 32              , 40); //température eau boucle peltier chaud
-  create_thermal(temp_wc_case        , 10, "wc_case"        , 0        , 30              , 35); //température dans la watercase
+  create_thermal(temp_wc_case        , 10, "wc_case"        , 0        , 27              , 35); //température dans la watercase
 
   // _________________________________ Association des sondes thermiques avec les ventilos _____________________________________________
   //                   sonde              ventilos

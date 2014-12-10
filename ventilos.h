@@ -6,7 +6,7 @@
 //=========================================================================================================//
 // _______________________________________ VENTILATEURS __________________________________________________
 #define MAX_NB_VENTILO 4
-#define PWM_VENTILATEUR_MIN 1
+#define PWM_VENTILATEUR_MIN 20
 typedef struct Ventilo {
   int pin;
   char *name;
