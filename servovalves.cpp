@@ -38,24 +38,42 @@ void init_servovalves(){
 //        variable           Pin servo  Pin close    Nom
   create_servovalve(servo_vrad    ,  11  ,  49  , "servo_vrad");
   create_servovalve(servo_vtec    ,  12  ,  51  , "servo_vtec");
-
+}
 
 
 // _________________________________ Initialisation servo _____________________________________________
 
-/*
+///*
 Servo valve_rad;
 Servo valve_tec;
 
 int val;
 int comp=0;
+int pos = 0;    // variable to store the servo position 
 
-void init_valve();
+void init_valve()
 {
   valve_rad.attach(servo_vrad.pin_out);
   valve_tec.attach(servo_vtec.pin_out);
 }
 
+
+void sweep() 
+{
+  for(pos = 0; pos < 120; pos += 1)  // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    valve_tec.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(15);                       // waits 15ms for the servo to reach the position 
+  } 
+  for(pos = 120; pos>=1; pos-=1)     // goes from 180 degrees to 0 degrees 
+  {                                
+    valve_tec.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(15);                       // waits 15ms for the servo to reach the position 
+  } 
+} 
+
+
+/*
 void loop(); 
 { 
   if (comp != val){
@@ -95,6 +113,6 @@ void loop()
 // _________________________________ Initialisation servo _____________________________________________
 
 
-}
+
 // ___________________________________________ PELTIERS __________________________________________________
 //============================================================================================================//
