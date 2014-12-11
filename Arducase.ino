@@ -122,8 +122,7 @@ void set_camera(void) {
 }
 
 
-Servo valve_rad;
-Servo valve_tec;
+
 /*
 // ________________________________ Gestion vannes _______________________________________
 

@@ -4,6 +4,7 @@
 #include "Arducase.h"
 
 #include "servovalves.h"
+#include <Servo.h>
 
 //============================================================================================================//
 // ___________________________________________ PELTIERS __________________________________________________
@@ -25,6 +26,7 @@ void create_servovalve(struct Servovalve &servovalve, int pin_out, int pin_close
   nb_servovalve++;
 
   servovalve.pin_out = pin_out;
+  servovalve.pin_close = pin_close;
   servovalve.name = name;
 
   pinMode(servovalve.pin_out, OUTPUT);
@@ -41,19 +43,30 @@ void init_servovalves(){
 
 // _________________________________ Initialisation servo _____________________________________________
 
-
-
+/*
+Servo valve_rad;
+Servo valve_tec;
 
 int val;
+int comp=0;
 
+void init_valve();
+{
+  valve_rad.attach(servo_vrad.pin_out);
+  valve_tec.attach(servo_vtec.pin_out);
+}
 
-  valve_rad.attach(servovalve.servo_vrad.pin_out);
-  valve_tec.attach(servovalve.servo_vtec.pin_out);
+void loop(); 
+{ 
+  if (comp != val){
+    val = 100;            //test value
+    val = map(val, 0, 100, 0, 179);     // scale it to use it with the servo (value between 0 and 180) 
+    valve_tec.write(val);                  // sets the servo position according to the scaled value
+    comp = val;
+    return;
 
-
-  val = 500;            //test value
-  val = map(val, 0, 1023, 0, 179);     // scale it to use it with the servo (value between 0 and 180) 
-  valve_tec.write(val);                  // sets the servo position according to the scaled value 
+  }
+}
 
 
 // Controlling a servo position using a potentiometer (variable resistor) 
