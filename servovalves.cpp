@@ -38,40 +38,65 @@ void init_servovalves(){
 //        variable           Pin servo  Pin close    Nom
   create_servovalve(servo_vrad    ,  11  ,  49  , "servo_vrad");
   create_servovalve(servo_vtec    ,  12  ,  51  , "servo_vtec");
+
+  init_valves();
 }
 
 
 // _________________________________ Initialisation servo _____________________________________________
 
 ///*
+
+void init_valves(){
 Servo valve_rad;
 Servo valve_tec;
 
 int val;
-int comp=0;
+int comp = 0;
 int pos = 0;    // variable to store the servo position 
 
-void init_valve()
-{
-  valve_rad.attach(servo_vrad.pin_out);
-  valve_tec.attach(servo_vtec.pin_out);
-}
+valve_rad.attach(servo_vrad.pin_out);
+valve_tec.attach(servo_vtec.pin_out);
 
-
-void sweep() 
-{
-  for(pos = 0; pos < 120; pos += 1)  // goes from 0 degrees to 180 degrees 
+if (servo_vtec.pin_close != 1){ //Test de la vanne TEC
+  for(pos = MIN_POS; pos < MAX_POS; pos += 1)  // goes from 0 degrees to 180 degrees 
   {                                  // in steps of 1 degree 
     valve_tec.write(pos);              // tell servo to go to position in variable 'pos' 
     delay(15);                       // waits 15ms for the servo to reach the position 
   } 
-  for(pos = 120; pos>=1; pos-=1)     // goes from 180 degrees to 0 degrees 
+  for(pos = MAX_POS; pos>=1; pos-=1)     // goes from 180 degrees to 0 degrees 
   {                                
     valve_tec.write(pos);              // tell servo to go to position in variable 'pos' 
     delay(15);                       // waits 15ms for the servo to reach the position 
   } 
-} 
 
+}
+
+else{
+  return;
+}
+
+
+if (servo_vrad.pin_close != 1){ //Test de la vanne RAD
+  for(pos = MIN_POS; pos < MAX_POS; pos += 1)  // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    valve_rad.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(15);                       // waits 15ms for the servo to reach the position 
+  } 
+  for(pos = MAX_POS; pos>=1; pos-=1)     // goes from 180 degrees to 0 degrees 
+  {                                
+    valve_rad.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(15);                       // waits 15ms for the servo to reach the position 
+  } 
+
+}
+
+else{
+  return;
+}
+
+
+}
 
 /*
 void loop(); 

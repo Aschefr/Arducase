@@ -37,11 +37,15 @@ const int sw_tec = 47; //Entrée switch TEC mode On ou Off, Off = 0, On = 1
 const int tec_pump = 52; //Sortie pour pompe refroidissement TEC face chaude.
 
 // ---------------------------------------------------------------------------------------- Débitmetre :
-const int flowm = 11; //Lecture débit
+const int flow = 11; //Lecture débit
 
 
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
 
+
+
+
+// ________________________________ Gestion caméras _______________________________________
 
 void set_camera(void) {
 
@@ -121,76 +125,7 @@ void set_camera(void) {
 
 }
 
-
-
-/*
-// ________________________________ Gestion vannes _______________________________________
-
-
-
-// Controlling a servo position using a potentiometer (variable resistor) 
-// by Michal Rinott <http://people.interaction-ivrea.it/m.rinott> 
-
-
- 
-Servo servo_vrad;  // create servo object to control a servo 
-Servo servo_vtec;  // create servo object to control a servo 
- 
-//const int servo_vtec = 11; //Gestion du servo de vanne 1
-//const int servo_vrad = 12; //Gestion du servo de vanne 2
-int val;    // variable to read the value from the analog pin
-int cmd_value;
- 
-void setup() 
-{ 
-  servo_vrad.attach(11);  // attaches the servo on pin 9 to the servo object (???) 
-  servo_vtec.attach(12);
-} 
- 
-void loop() 
-{ 
-  val = cmd_value;            // reads the value of the potentiometer (value between 0 and 1023) 
-  val = map(val, 0, 100, 0, 179);     // scale it to use it with the servo (value between 0 and 180) 
-  myservo.write(val);                  // sets the servo position according to the scaled value 
-  delay(15);                           // waits for the servo to get there 
-} 
-
-
-//Théorie :
-/*
-1) Initialisation :
-A l'allumage du système, initialiser les positions de vannes = Ordre de fermetures vanne 1 jusqu'au contact de fermeture Input Pin 49, puis ouverture à fond,
-Pendant l'ouverture de la vanne 1, fermeture à fond de la vanne 2 jusqu'au contact de fermeture Input Pin 51, puis ouverture à fond,
-Pendant l'ouverture de la vanne 2, fermeture à fond de la vanne 1, on est arrivé à l'état de marche normale.
-
-La fermeture d'une vanne doit prendre moins de 3 seconde, au delà, il y a un défaut :
-
-Si un défaut survient pendant cette opération, faire clignoter tout les boutons, et afficher message : "Def vanne elec | Open manu valve"
-Attente d'appuis sur le bouton "suivant" Input pin 38, pour reprendre la marche dégradé.
-
-2) Marche normale :
-En mode Auto pour MODE et/ou CAMERA, Surveillance des températures jusqu'à l'atteinte d'un seuil bas de déclanchement. Si un seuil bas reste actif pendant plus de X seconde, enclanchement automatique du MODE supérieur.
-Si la température enregistré au changement de MODE, subit une déscente de X°C (0.5°C), changement du MODE à celui inférieur.
-
-En mode Manuel : Surveillance des températures jusqu'à l'atteinte d'un seuil bas de déclanchement. Si un seuil bas reste actif pendant plus de X seconde, clignotement du mode supérieur jusqu'à appuis sur un bouton de MODE.
-
-
-
-
-
-Si TEC switch ON et Mode heavy ou Extrem engagé (de manière auto ou Manuel) = Allumer les 2 premiers TEC (Output 42) et la pompe (Output 52),
-Quand la différence de température entre "temp_tec_hot" et "temp_tec_cold" atteind X°C minimum = Ouvrir servo_vtec de 10% et fermer servo_vrad de 5%, 
-Après 10 seconde, si la température entre "temp_tec_hot" et "temp_tec_cold" est toujours de X°C minimum, recommencer l'étape précédente,
-Si la température passe en dessous de X°C, allumer un TEC supplémentaire
-
-
-
-*/
-
-
-// ________________________________ Gestion vannes _______________________________________
-
-
+// ________________________________ Gestion caméras _______________________________________
 
 
 
@@ -369,6 +304,7 @@ void setup (void)
   init_peltiers();
   init_vumetres();
   init_servovalves();
+
 
 
 }
