@@ -30,6 +30,7 @@ extern int nb_sondes;
 
 extern Termal_sensor temp_wtr_out_pc;
 extern Termal_sensor temp_wtr_out_pcrad;
+extern Termal_sensor temp_wtr_in_pc;
 
 extern void thermals_save();
 

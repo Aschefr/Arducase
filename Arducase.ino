@@ -1,6 +1,8 @@
 
 #include <LiquidCrystal.h>
+#include <Servo.h>
 #include "Arducase.h"
+
 
 #include "modes.h"
 #include "ventilos.h"
@@ -8,6 +10,7 @@
 #include "sondes.h"
 #include "peltiers.h"
 #include "vumetre.h"
+#include "servovalves.h"
 
 LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 
@@ -33,14 +36,8 @@ const int sw_tec = 47; //Entrée switch TEC mode On ou Off, Off = 0, On = 1
 
 const int tec_pump = 52; //Sortie pour pompe refroidissement TEC face chaude.
 
-// ----------------------------------------------------------------------------- Gestion electrovannes :
-
-const int valve1_close = 49; //Retour d'état vanne 1 fermé
-const int valve2_close = 51; //Retour d'état vanne 2 fermé
-
 // ---------------------------------------------------------------------------------------- Débitmetre :
-const int flowm_rad = 11; //Lecture débit
-const int flowm_tec = 12; //Lecture débit
+const int flowm = 11; //Lecture débit
 
 
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
@@ -125,13 +122,17 @@ void set_camera(void) {
 }
 
 
+Servo valve_rad;
+Servo valve_tec;
 /*
 // ________________________________ Gestion vannes _______________________________________
+
+
 
 // Controlling a servo position using a potentiometer (variable resistor) 
 // by Michal Rinott <http://people.interaction-ivrea.it/m.rinott> 
 
-#include <Servo.h> 
+
  
 Servo servo_vrad;  // create servo object to control a servo 
 Servo servo_vtec;  // create servo object to control a servo 
@@ -368,6 +369,7 @@ void setup (void)
   init_cameras();
   init_peltiers();
   init_vumetres();
+  init_servovalves();
 
 
 }
