@@ -41,33 +41,35 @@ void init_servovalves(){
   create_servovalve(servo_vrad    ,  11  ,  49   ,    0  ,  160    , "servo_vrad");
   create_servovalve(servo_vtec    ,  12  ,  51   ,  180  ,   60    , "servo_vtec");
 
-  // bouger de max vers min et s'arreter des qu'on trouve la fin de course
-
+  // bouger de max vers min et s'arreter des qu'on trouve la fin de course !
   Servovalve servo;
-  for (int i = 0; i < nb_servovalve; ++i)
+  for(int i = 0; i < nb_servovalve; ++i)
   {
     servo = *servovalves[i];
 
     int j = servo.pos_max;
     do {
       if(servo.pos_max > servo.pos_min) {
-        j = j - 5;
+        j = j - 1;
       } else {
-        j = j + 5;
+        j = j + 1;
       }
       servo.servo_pin.write(j);
       delay(15);
     } while(digitalRead(servo.pin_close) != HIGH && j != servo.pos_min );
 
-    if(j != servo.pos_min) {
-      servo.servo_pin.write(servo.pos_max);
+    if(j == servo.pos_min) {
       servo.pos_min = servo.pos_max;
       // PROBLEME LECTURE CAPTEUR ou SERVO !!!
     } else {
       servo.pos_min = j;
     }
+
+    servo.servo_pin.write(servo.pos_max);
   }
 
+  // on ferme vtec au démarrage !
+  servo_vtec.servo_pin.write(servo_vtec.pos_min);
 }
 
 
