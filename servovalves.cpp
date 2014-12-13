@@ -38,8 +38,8 @@ void create_servovalve(struct Servovalve &servovalve, int pin_out, int pin_close
 
 void init_servovalves(){
 //        variable           Pin servo  Pin close Pos min  Pos max   Nom
-  create_servovalve(servo_vrad    ,  11  ,  49   ,    0  ,  160    , "servo_vrad");
-  create_servovalve(servo_vtec    ,  12  ,  51   ,  180  ,   60    , "servo_vtec");
+  create_servovalve(servo_vrad    ,  11  ,  49   ,    180  ,  60    , "servo_vrad");
+  create_servovalve(servo_vtec    ,  12  ,  51   ,  0  ,   16    , "servo_vtec");
 
   // bouger de max vers min et s'arreter des qu'on trouve la fin de course !
   Servovalve* servo;
