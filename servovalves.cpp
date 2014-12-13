@@ -41,7 +41,7 @@ void init_servovalves(){
   create_servovalve(servo_vrad    ,  11  ,  49   , 180  ,   50  , "servo_vrad");
   create_servovalve(servo_vtec    ,  12  ,  51   ,   0  ,  140  , "servo_vtec");
 
-  // bouger de max vers min et s'arreter des qu'on trouve la fin de course !
+  // bouger de max vers min et s'arreter des qu'on trouve la fin de course, et enregistrer cette position.
   Servovalve* servo;
   for(int i = 0; i < nb_servovalve; ++i)
   {
@@ -62,16 +62,23 @@ void init_servovalves(){
       servo->pos_min = servo->pos_max;
       // PROBLEME LECTURE CAPTEUR ou SERVO !!!
     } else {
-      servo->pos_min = j;
+      //servo->pos_min = j;
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.println("Def")
+      lcd.setCursor(5, 0);
+      lcd.println(servo.name);
+      lcd.setCursor(0, 1);
+      lcd.println("Open bypass vlve");
     }
 
     servo->servo_pin.write(servo->pos_max);
   }
 
   // on ferme vtec au démarrage !
-  servo_vtec.servo_pin.write(servo_vtec.pos_min);
+  servo_vtec.servo_pin.write(servo_vtec.pos_min); //fermeture
   delay(15);
-  servo_vtec.servo_pin.write(servo_vtec.pos_min + 9);
+  servo_vtec.servo_pin.write(servo_vtec.pos_min + 9); //ouverture de quelques points pour évité au servomoteur d'être mécaniquement en contrainte (évite aussi les parasites)
 }
 
 

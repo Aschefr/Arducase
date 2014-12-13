@@ -69,6 +69,11 @@ void init_cameras(){
 
   // alume la led du camera selectionné dès le debut
   //digitalWrite(selected_cam->pin_led, HIGH);
+
+  digitalWrite(camera2.pin_led, HIGH);
+  delay(100);
+  digitalWrite(camera2.pin_led, LOW);
+
 }
 // ___________________________________________ CAMERAS __________________________________________________
 //============================================================================================================//
