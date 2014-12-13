@@ -9,7 +9,7 @@
 // ___________________________________________ PELTIERS __________________________________________________
 #define MAX_NB_VALVE 3
 #define MIN_POS 0
-#define MAX_POS 120
+#define MAX_POS 180
 typedef struct Servovalve{
   int pin_out; //Sortie de commande servomoteur
   int pin_close; //pin d'entrée du capteur position fermé

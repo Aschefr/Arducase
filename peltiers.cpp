@@ -43,7 +43,7 @@ void init_peltiers(){
   create_peltier(tec_5      , 50 , "6"   );
 
 }
-
+/*
 void tec_drive(){
   if (digitalRead(sw_tec) == 1 && nb_modes == 4){
     if (digitalRead(sw_cooling_auto) == 1){
@@ -51,7 +51,7 @@ void tec_drive(){
     }
   }
 }
-
+*/
 
 
 

@@ -295,6 +295,7 @@ void setup (void)
   pinMode(sw_cooling_auto, INPUT);
   pinMode(sw_tec, INPUT);
 
+
   // on initialise les modes et tout
   // l'ordre est important !!!!!
   init_modes();
@@ -304,6 +305,7 @@ void setup (void)
   init_peltiers();
   init_vumetres();
   init_servovalves();
+  //init_valves();
 
 
 
@@ -317,8 +319,11 @@ void loop (void) {
   lcd_temp_draw();
   thermals_save();
   set_camera(); // après thermal save
-  //screenSaver();
   handle_cpu_mem();
+
+
+
+
 }
 // _______________________________________ Main Loop _______________________________________
 
