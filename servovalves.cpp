@@ -37,16 +37,35 @@ void create_servovalve(struct Servovalve &servovalve, int pin_out, int pin_close
 }
 
 void init_servovalves(){
-//        variable           Pin servo  Pin close Pos min Pos max   Nom
-  create_servovalve(servo_vrad    ,  11  ,  49   ,  60   ,  160    , "servo_vrad");
-  create_servovalve(servo_vtec    ,  12  ,  51   , 160   ,   60    , "servo_vtec");
+//        variable           Pin servo  Pin close Pos min  Pos max   Nom
+  create_servovalve(servo_vrad    ,  11  ,  49   ,    0  ,  160    , "servo_vrad");
+  create_servovalve(servo_vtec    ,  12  ,  51   ,  180  ,   60    , "servo_vtec");
 
   // bouger de max vers min et s'arreter des qu'on trouve la fin de course
 
-  val = 50;            // reads the value of the potentiometer (value between 0 and 1023) 
-  val = map(val, 0, 100, servo_vtec.pos_min, pos_max);  // scale it to use it with the servo (value between 0 and 180) 
-  servo_vtec.servo_pin.write(val);                      // sets the servo position according to the scaled value 
-  delay(15); 
+  for (int i = 0; i < nb_servovalve; ++i)
+  {
+    servo = servovalves[i];
+
+    int j = servo.pos_max;
+    do {
+      if(servo.pos_max > servo.pos_min) {
+        j = j - 5;
+      } else {
+        j = j + 5;
+      }
+      servo.servo_pin.write(j);
+      delay(15);
+    } while(digitalRead(servo.pin_close) !== HIGH || j !== servo.pos_min );
+
+    if(j !== servo.pos_min) {
+      servo.servo_pin.write(servo.pos_max);
+      servo.pos_min = servo.pos_max;
+      // PROBLEME LECTURE CAPTEUR ou SERVO !!!
+    } else {
+      servo.pos_min = j;
+    }
+  }
 
 }
 
