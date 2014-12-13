@@ -305,7 +305,6 @@ void setup (void)
   init_peltiers();
   init_vumetres();
   init_servovalves();
-  //init_valves();
 
 
 

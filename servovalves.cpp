@@ -17,7 +17,7 @@ Servovalve *servovalves[MAX_NB_VALVE];
 int nb_servovalve = 0;
 
 
-void create_servovalve(struct Servovalve &servovalve, int pin_out, int pin_close, char *name){
+void create_servovalve(struct Servovalve &servovalve, int pin_out, int pin_close, int pos_min, int pos_max, char *name){
   if (nb_servovalve + 1 > MAX_NB_VALVE){
     return;
   }
@@ -25,21 +25,29 @@ void create_servovalve(struct Servovalve &servovalve, int pin_out, int pin_close
   servovalves[nb_servovalve] = &servovalve;
   nb_servovalve++;
 
-  servovalve.pin_out = pin_out;
+  servovalve.servo_pin.attach(pin_out);
   servovalve.pin_close = pin_close;
+  servovalve.pos_min = pos_min;
+  servovalve.pos_max = pos_max;
   servovalve.name = name;
 
-  pinMode(servovalve.pin_out, OUTPUT);
   pinMode(servovalve.pin_close, INPUT);
 
+  servovalve.servo_pin.write(pos_max);
 }
 
 void init_servovalves(){
-//        variable           Pin servo  Pin close    Nom
-  create_servovalve(servo_vrad    ,  11  ,  49  , "servo_vrad");
-  create_servovalve(servo_vtec    ,  12  ,  51  , "servo_vtec");
+//        variable           Pin servo  Pin close Pos min Pos max   Nom
+  create_servovalve(servo_vrad    ,  11  ,  49   ,  60   ,  160    , "servo_vrad");
+  create_servovalve(servo_vtec    ,  12  ,  51   , 160   ,   60    , "servo_vtec");
 
-  init_valves();
+  // bouger de max vers min et s'arreter des qu'on trouve la fin de course
+
+  val = 50;            // reads the value of the potentiometer (value between 0 and 1023) 
+  val = map(val, 0, 100, servo_vtec.pos_min, pos_max);  // scale it to use it with the servo (value between 0 and 180) 
+  servo_vtec.servo_pin.write(val);                      // sets the servo position according to the scaled value 
+  delay(15); 
+
 }
 
 
@@ -47,6 +55,7 @@ void init_servovalves(){
 
 
 
+/*
 void init_valves(){
 Servo valve_rad;
 Servo valve_tec;
@@ -63,7 +72,6 @@ valve_tec.attach(11);
 
 }
 
-/*
 if (servo_vrad.pin_close != 1){ //Test de la vanne RAD
   for(pos = MIN_POS; pos < MAX_POS; pos += 1)  // goes from 0 degrees to 180 degrees 
   {                                  // in steps of 1 degree 

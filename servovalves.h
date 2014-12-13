@@ -11,8 +11,10 @@
 #define MIN_POS 0
 #define MAX_POS 180
 typedef struct Servovalve{
-  int pin_out; //Sortie de commande servomoteur
+  Servo servo_pin; //Sortie de commande servomoteur
   int pin_close; //pin d'entrée du capteur position fermé
+  int pos_min;
+  int pos_max;
   char *name; //nom
 } Servovalve;
 
@@ -20,7 +22,6 @@ typedef struct Servovalve{
 void create_servovalve(struct Servovalve &servovalve, int pin_out, int pin_close, char *name);
 
 void init_servovalves();
-void init_valves();
 
 // ___________________________________________ PELTIERS __________________________________________________
 //============================================================================================================//
