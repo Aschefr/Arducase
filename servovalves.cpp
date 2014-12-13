@@ -43,9 +43,10 @@ void init_servovalves(){
 
   // bouger de max vers min et s'arreter des qu'on trouve la fin de course
 
+  Servovalve servo;
   for (int i = 0; i < nb_servovalve; ++i)
   {
-    servo = servovalves[i];
+    servo = *servovalves[i];
 
     int j = servo.pos_max;
     do {
@@ -56,9 +57,9 @@ void init_servovalves(){
       }
       servo.servo_pin.write(j);
       delay(15);
-    } while(digitalRead(servo.pin_close) !== HIGH || j !== servo.pos_min );
+    } while(digitalRead(servo.pin_close) != HIGH || j != servo.pos_min );
 
-    if(j !== servo.pos_min) {
+    if(j != servo.pos_min) {
       servo.servo_pin.write(servo.pos_max);
       servo.pos_min = servo.pos_max;
       // PROBLEME LECTURE CAPTEUR ou SERVO !!!
