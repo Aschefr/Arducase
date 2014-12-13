@@ -57,7 +57,7 @@ void init_servovalves(){
       }
       servo.servo_pin.write(j);
       delay(15);
-    } while(digitalRead(servo.pin_close) != HIGH || j != servo.pos_min );
+    } while(digitalRead(servo.pin_close) != HIGH && j != servo.pos_min );
 
     if(j != servo.pos_min) {
       servo.servo_pin.write(servo.pos_max);
