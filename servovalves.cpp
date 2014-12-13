@@ -70,6 +70,8 @@ void init_servovalves(){
 
   // on ferme vtec au démarrage !
   servo_vtec.servo_pin.write(servo_vtec.pos_min);
+  delay(15);
+  servo_vtec.servo_pin.write(servo_vtec.pos_min - 2);
 }
 
 
