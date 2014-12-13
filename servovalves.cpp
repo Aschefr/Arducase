@@ -62,12 +62,12 @@ void init_servovalves(){
       servo->pos_min = servo->pos_max;
       // PROBLEME LECTURE CAPTEUR ou SERVO !!!
     } else {
-      //servo->pos_min = j;
+      servo->pos_min = j;
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.println("Def")
+      lcd.println("Def");
       lcd.setCursor(5, 0);
-      lcd.println(servo.name);
+      lcd.println(servo->name);
       lcd.setCursor(0, 1);
       lcd.println("Open bypass vlve");
     }
