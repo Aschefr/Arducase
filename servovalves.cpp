@@ -93,21 +93,19 @@ void init_servovalves(){
       lcd.setCursor(0, 0);
       lcd.println(servo_vrad.name);
       lcd.setCursor(3, 0);
-      lcd.println(" clse pos");
-      lcd.setCursor(12, 0);
+      lcd.println(" clse pos  ");
+      lcd.setCursor(13, 0);
       lcd.println(servo_vrad.pos_min);
-      lcd.setCursor(15, 0);
-      lcd.println("% ");
 
       //affichage pos_min second servo
       lcd.setCursor(0, 1);
       lcd.println(servo_vtec.name);
       lcd.setCursor(3, 1);
-      lcd.println(" clse pos ");
+      lcd.println(" clse pos  ");
       lcd.setCursor(13, 1);
       lcd.println(servo_vtec.pos_min);
       lcd.setCursor(15, 1);
-      lcd.println("%  ");
+      lcd.println("   ");
 
     }
 
