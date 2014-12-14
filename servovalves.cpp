@@ -17,7 +17,7 @@ Servovalve *servovalves[MAX_NB_VALVE];
 int nb_servovalve = 0;
 
 
-void create_servovalve(struct Servovalve &servovalve, int pin_out, int pin_close, int pos_min, int pos_max, char *name){
+void create_servovalve(struct Servovalve &servovalve, int pin_out, int pin_close, int pos_min, int pos_max, int offset, char *name){
   if (nb_servovalve + 1 > MAX_NB_VALVE){
     return;
   }
@@ -27,8 +27,10 @@ void create_servovalve(struct Servovalve &servovalve, int pin_out, int pin_close
 
   servovalve.servo_pin.attach(pin_out);
   servovalve.pin_close = pin_close;
+  servovalve.pin_servo = pin_out;
   servovalve.pos_min = pos_min;
   servovalve.pos_max = pos_max;
+  servovalve.offset = offset;
   servovalve.name = name;
 
   pinMode(servovalve.pin_close, INPUT);
@@ -36,13 +38,27 @@ void create_servovalve(struct Servovalve &servovalve, int pin_out, int pin_close
   servovalve.servo_pin.write(pos_max);
 }
 
+void use_servo(struct Servovalve &servo_to_use, int cmd_value) { //se rappeler
+  servo_to_use.servo_pin.attach(servo_to_use.pin_servo);
+  servo_to_use.servo_pin.write(cmd_value);
+  delay(500);
+  servo_to_use.servo_pin.detach();
+}
+
 void init_servovalves(){
-//        variable           Pin servo  Pin close Pos min  Pos max   Nom
-  create_servovalve(servo_vrad    ,  11  ,  49   , 180  ,   50  , "servo_vrad");
-  create_servovalve(servo_vtec    ,  12  ,  51   ,   0  ,  140  , "servo_vtec");
+//        variable              Pin servo|Pin close|Pos min|Pos max | Offset |    Nom
+  create_servovalve(servo_vrad  ,   11   ,   49   ,  155   ,   50   ,   0   , "Rad");
+  create_servovalve(servo_vtec  ,   12   ,   51   ,   30   ,  140   ,  -6   , "TEC");
+
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.println("Initialisation    ");
+
+      lcd.setCursor(0, 1);
+      lcd.println("valve position    ");
 
   // bouger de max vers min et s'arreter des qu'on trouve la fin de course, et enregistrer cette position.
-  Servovalve* servo;
+  Servovalve* servo; //Servovalve* est un type, comme "int"
   for(int i = 0; i < nb_servovalve; ++i)
   {
     servo = servovalves[i];
@@ -59,27 +75,53 @@ void init_servovalves(){
     } while(digitalRead(servo->pin_close) != HIGH && j != servo->pos_min );
 
     if(j == servo->pos_min) {
-      servo->pos_min = servo->pos_max;
-      // PROBLEME LECTURE CAPTEUR ou SERVO !!!
-    } else {
-      servo->pos_min = j;
+      servo->pos_min = servo->pos_max; // PROBLEME LECTURE CAPTEUR ou SERVO !!!
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.println("Def");
-      lcd.setCursor(5, 0);
+      lcd.println("Def ");
+      lcd.setCursor(4, 0);
       lcd.println(servo->name);
+      lcd.setCursor(14, 0);
+      lcd.println("  ");      
       lcd.setCursor(0, 1);
       lcd.println("Open bypass vlve");
+      
+    } else {
+      servo->pos_min = j + servo->offset;
+      //affichage pos_min premier servo
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.println(servo_vrad.name);
+      lcd.setCursor(3, 0);
+      lcd.println(" clse pos");
+      lcd.setCursor(12, 0);
+      lcd.println(servo_vrad.pos_min);
+      lcd.setCursor(15, 0);
+      lcd.println("% ");
+
+      //affichage pos_min second servo
+      lcd.setCursor(0, 1);
+      lcd.println(servo_vtec.name);
+      lcd.setCursor(3, 1);
+      lcd.println(" clse pos ");
+      lcd.setCursor(13, 1);
+      lcd.println(servo_vtec.pos_min);
+      lcd.setCursor(15, 1);
+      lcd.println("%  ");
+
     }
 
     servo->servo_pin.write(servo->pos_max);
   }
 
-  // on ferme vtec au démarrage !
-  servo_vtec.servo_pin.write(servo_vtec.pos_min); //fermeture
+  // on ferme vtec et on ouvre vrad au démarrage
+  use_servo(servo_vtec, servo_vtec.pos_min + servo_vtec.offset); //fermeture vtec
+  use_servo(servo_vrad, servo_vrad.pos_max + servo_vrad.offset); //ouverture vrad
   delay(15);
-  servo_vtec.servo_pin.write(servo_vtec.pos_min + 9); //ouverture de quelques points pour évité au servomoteur d'être mécaniquement en contrainte (évite aussi les parasites)
+  //servo_vtec.servo_pin.write(servo_vtec.pos_min + 9); //ouverture de quelques points pour évité au servomoteur d'être mécaniquement en contrainte (évite aussi les parasites)
 }
+
+
 
 
 // _________________________________ Initialisation servo _____________________________________________

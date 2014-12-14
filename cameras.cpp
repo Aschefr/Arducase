@@ -54,10 +54,10 @@ void init_cameras(){
 
   // _________________________________ Gestion des Cameras _____________________________________________
   //          variable      btn led    nom             groupe
-  create_camera(camera1   , 31, 30, "Radiateur 9*120"     ,1 ); //
-  create_camera(camera2   , 33, 32, "Watercase Bas  "     ,1 ); //
-  create_camera(camera3   , 35, 34, "Camera PC      "     ,2 ); //
-  create_camera(camera4   , 37, 36, "Watercase Res  "     ,2 ); //
+  create_camera(camera1   , 31, 30, "Radiateur 9*120 "     ,1 ); //
+  create_camera(camera2   , 33, 32, "Watercase Bas   "     ,1 ); //
+  create_camera(camera3   , 35, 34, "Camera PC       "     ,2 ); //
+  create_camera(camera4   , 37, 36, "Watercase Res   "     ,2 ); //
 
 
   // _________________________________ Association des cameras avec les ventilos _____________________________________________
@@ -71,8 +71,10 @@ void init_cameras(){
   //digitalWrite(selected_cam->pin_led, HIGH);
 
   digitalWrite(camera2.pin_led, HIGH);
-  delay(100);
+  digitalWrite(camera4.pin_led, HIGH);
+  delay(200);
   digitalWrite(camera2.pin_led, LOW);
+  digitalWrite(camera4.pin_led, LOW);
 
 }
 // ___________________________________________ CAMERAS __________________________________________________

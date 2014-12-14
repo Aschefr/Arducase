@@ -13,8 +13,10 @@
 typedef struct Servovalve{
   Servo servo_pin; //Sortie de commande servomoteur
   int pin_close; //pin d'entrée du capteur position fermé
+  int pin_servo;
   int pos_min;
   int pos_max;
+  int offset;
   char *name; //nom
 } Servovalve;
 
