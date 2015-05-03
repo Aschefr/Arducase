@@ -47,8 +47,10 @@ void use_servo(struct Servovalve &servo_to_use, int cmd_value) { //se rappeler
 
 void init_servovalves(){
 //        variable              Pin servo|Pin close|Pos min|Pos max | Offset |    Nom
-  create_servovalve(servo_vrad  ,   11   ,   49   ,  155   ,   50   ,   0   , "Rad");
-  create_servovalve(servo_vtec  ,   12   ,   51   ,   30   ,  140   ,  -6   , "TEC");
+    create_servovalve(servo_vrad  ,   11   ,   49   ,  155   ,   50   ,   0   , "Rad"); //ouvert
+    create_servovalve(servo_vtec  ,   12   ,   51   ,   30   ,  140   ,  -6   , "TEC"); //fermé
+//    create_servovalve(servo_vrad  ,   11   ,   49   ,  155   ,   50   ,  90   , "Rad"); // ouvert
+//    create_servovalve(servo_vtec  ,   12   ,   51   ,   30   ,  140   ,  40   , "TEC"); //ouvert
 
       lcd.clear();
       lcd.setCursor(0, 0);

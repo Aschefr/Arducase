@@ -65,7 +65,7 @@ void init_thermals(){
 
   // _________________________________ Gestion des sondes thermiques _____________________________________________
   //              variable            pin  name              offset     seuil_bas      seuil_haut
-  create_thermal(temp_wtr_in_pc      , 1 , "wtr_in_pc"      , 0        , 30              , 30); //température eau entrée pc
+  create_thermal(temp_wtr_in_pc      , 1 , "wtr_in_pc"      , -0.5        , 30              , 30); //température eau entrée pc
   create_thermal(temp_wtr_out_pc     , 2 , "wtr_out_pc"     , 0        , 30              , 40); //température eau sortie pc
   //create_thermal(temp_cpu            , 3 , "cpu"            , 0        , 30              , 40); //température au contact du CPU
   create_thermal(temp_gpu            , 4 , "gpu"            , 0        , 45              , 60); //température au contact du GPU
