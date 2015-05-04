@@ -11,6 +11,7 @@
 #include "peltiers.h"
 #include "vumetre.h"
 #include "servovalves.h"
+#include "flowmeters.h"
 
 LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 
