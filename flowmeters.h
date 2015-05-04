@@ -8,13 +8,13 @@
 // ___________________________________________ PELTIERS __________________________________________________
 #define MAX_NB_TEC 6
 typedef struct Flowmeter{
-  int pin_out;
+  int pin_in;
   char *name;
 } Flowmeter;
 
 
 
-void create_flowmeter(struct flowmeter &flowmeter, int pin_out, char *name);
+void create_flowmeter(struct flowmeter &flowmeter, int pin_in, char *name);
 
 void init_flowmeters();
 
