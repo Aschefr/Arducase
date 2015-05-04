@@ -12,12 +12,12 @@
 Flowmeter mainloop_flow;
 
 
-Flowmeter *flowmeters[MAX_NB_TEC];
+Flowmeter *flowmeters[MAX_NB_FLOW;
 int nb_flowmeter = 0;
 
 
 void create_flowmeter(struct Flowmeter &flowmeter, int pin_in, char *name){
-  if (nb_flowmeter + 1 > MAX_NB_TEC){
+  if (nb_flowmeter + 1 > MAX_NB_FLOW){
     return;
   }
 
