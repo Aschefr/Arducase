@@ -37,7 +37,7 @@ const int sw_tec = 47; //Entrée switch TEC mode On ou Off, Off = 0, On = 1
 const int tec_pump = 52; //Sortie pour pompe refroidissement TEC face chaude.
 
 // ---------------------------------------------------------------------------------------- Débitmetre :
-const int flow = 11; //Lecture débit
+//const int flow = 11; //Lecture débit
 
 
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
@@ -261,6 +261,21 @@ void lcd_temp_draw (void) {
 //=========================================================================================//
 
 
+// ________________ Calcul flow ______________________
+//=====================================================//
+volatile int NbTopsFan; //measuring the rising edges of the signal
+int Calc;                               
+int hallsensor = 20;    //The pin location of the sensor
+ 
+void rpm ()     //This is the function that the interupt calls 
+{ 
+  NbTopsFan++;  //This function measures the rising and falling edge of the 
+
+//hall effect sensors signal
+} 
+//=====================================================//
+// ________________ Calcul flow ______________________
+
 
 
 
@@ -303,7 +318,12 @@ void setup (void)
   pinMode(sw_video_auto, INPUT);
   pinMode(sw_cooling_auto, INPUT);
   pinMode(sw_tec, INPUT);
+  pinMode(tec_pump, OUTPUT);
 
+//Flow
+  pinMode(hallsensor, INPUT); //initializes digital pin 2 as an input
+  Serial.begin(9600); //This is the setup function where the serial port is 
+  attachInterrupt(3, rpm, RISING); //and the interrupt is attached
 
   // on initialise les modes et tout
   // l'ordre est important !!!!!
@@ -314,7 +334,6 @@ void setup (void)
   init_peltiers();
   init_vumetres();
   init_servovalves();
-
 
 
 }
@@ -329,8 +348,17 @@ void loop (void) {
   set_camera(); // après thermal save
   handle_cpu_mem();
 
+//Flow
+  NbTopsFan = 0;	//Set NbTops to 0 ready for calculations
+  sei();		//Enables interrupts
+  delay (1000);	//Wait 1 second
+  cli();		//Disable interrupts
+  Calc = (NbTopsFan * 60 / 7.5); //(Pulse frequency x 60) / 7.5Q, = flow rate 
+  Serial.print (Calc, DEC); //Prints the number calculated above
+  Serial.print (" L/min\r\n"); //Prints "L/hour" and returns a  new line
+  
 
-
+  //digitalWrite(tec_pump, HIGH); //Allume pompe TEC
 
 }
 // _______________________________________ Main Loop _______________________________________
