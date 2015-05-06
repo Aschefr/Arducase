@@ -62,9 +62,9 @@ void init_cameras(){
 
   // _________________________________ Association des cameras avec les ventilos _____________________________________________
   //                  cam        ventilos
-  add_cam_to_ventilo(camera1   , vent_pc);
+  add_cam_to_ventilo(camera1   , vent_rad);
   add_cam_to_ventilo(camera2   , vent_wc);
-  add_cam_to_ventilo(camera3   , vent_rad);
+  add_cam_to_ventilo(camera3   , vent_pc);
 
 
   // alume la led du camera selectionné dès le debut

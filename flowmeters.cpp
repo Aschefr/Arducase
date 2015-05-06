@@ -12,7 +12,7 @@
 Flowmeter mainloop_flow;
 
 
-Flowmeter *flowmeters[MAX_NB_FLOW;
+Flowmeter *flowmeters[MAX_NB_FLOW];
 int nb_flowmeter = 0;
 
 

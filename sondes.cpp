@@ -65,23 +65,23 @@ void init_thermals(){
 
   // _________________________________ Gestion des sondes thermiques _____________________________________________
   //              variable            pin  name              offset     seuil_bas      seuil_haut
-  create_thermal(temp_wtr_in_pc      , 1 , "wtr_in_pc"      , -0.5        , 30              , 30); //température eau entrée pc
-  create_thermal(temp_wtr_out_pc     , 2 , "wtr_out_pc"     , 0        , 30              , 40); //température eau sortie pc
+  create_thermal(temp_wtr_in_pc      , 1 , "wtr_in_pc"      , -3        , 25              , 40); //température eau entrée pc
+  create_thermal(temp_wtr_out_pc     , 2 , "wtr_out_pc"     , -3        , 25              , 40); //température eau sortie pc
   //create_thermal(temp_cpu            , 3 , "cpu"            , 0        , 30              , 40); //température au contact du CPU
-  create_thermal(temp_gpu            , 4 , "gpu"            , 0        , 45              , 60); //température au contact du GPU
-  create_thermal(temp_wtr_out_pcrad  , 5 , "wtr_out_pcrad"  , 0        , 30              , 30); //température eau sortie du radiateur PC
-  create_thermal(temp_pc_case        , 6 , "pc_case"        , 0        , 30              , 35); //température à l'intérieur du PC
-  create_thermal(temp_tec_hot        , 7 , "tec_hot"        , 0        , 30              , 35); //température du waterblock peltier face chaude
-  create_thermal(temp_tec_cold       , 8 , "tec_cold"       , 0        , 30              , 30); //température du waterblock peltier face froide
-  create_thermal(temp_wtr_tec_hot    , 9 , "wtr_tec_hot"    , 0        , 32              , 40); //température eau boucle peltier chaud
-  create_thermal(temp_wc_case        , 10, "wc_case"        , 0        , 27              , 35); //température dans la watercase
+  create_thermal(temp_gpu            , 4 , "gpu"            , 4        , 45              , 55); //température au contact des ram GPU
+  create_thermal(temp_wtr_out_pcrad  , 5 , "wtr_out_pcrad"  , -3        , 30              , 30); //température eau sortie du radiateur PC
+  create_thermal(temp_pc_case        , 6 , "pc_case"        , -2.5        , 30              , 35); //température à l'intérieur du PC
+  create_thermal(temp_tec_hot        , 7 , "tec_hot"        , -3        , 30              , 35); //température du waterblock peltier face chaude
+  create_thermal(temp_tec_cold       , 8 , "tec_cold"       , -3.5        , 30              , 30); //température du waterblock peltier face froide
+  create_thermal(temp_wtr_tec_hot    , 9 , "wtr_tec_hot"    , -3        , 32              , 40); //température eau boucle peltier chaud
+  create_thermal(temp_wc_case        , 10, "wc_case"        , -2.5        , 25              , 30); //température dans la watercase
 
   // _________________________________ Association des sondes thermiques avec les ventilos _____________________________________________
   //                   sonde              ventilos
   
   add_ventilo_to_sonde(temp_wtr_out_pc   , vent_rad);
   //add_ventilo_to_sonde(temp_cpu          , vent_rad);
-  add_ventilo_to_sonde(temp_gpu          , vent_rad);
+  add_ventilo_to_sonde(temp_gpu          , vent_pc);
   add_ventilo_to_sonde(temp_pc_case      , vent_pc );
   add_ventilo_to_sonde(temp_tec_hot      , vent_wc );
   add_ventilo_to_sonde(temp_wtr_tec_hot  , vent_wc );
