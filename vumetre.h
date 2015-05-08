@@ -13,6 +13,8 @@ typedef struct Vumetre{
 } Vumetre;
 
 
+extern Vumetre vu_tec;
+
 void create_vumetre(struct Vumetre &vumetre, int pin_out, char *name);
 
 void init_vumetres();

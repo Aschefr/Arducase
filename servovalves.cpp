@@ -45,6 +45,32 @@ void use_servo(struct Servovalve &servo_to_use, int cmd_value) { //se rappeler
   servo_to_use.servo_pin.detach();
 }
 
+
+
+void open_servo(struct Servovalve &servo_to_use) {
+  servo_to_use.servo_pin.attach(servo_to_use.pin_servo);
+
+  for(int i = 0; i <= 100; i++) {
+    servo_to_use.servo_pin.write( map( i, 0, 100, servo_to_use.pos_min + servo_to_use.offset, servo_to_use.pos_max + servo_to_use.offset) );
+    delay(15);
+  }
+
+  delay(500);
+  servo_to_use.servo_pin.detach(); 
+}
+
+void close_servo(struct Servovalve &servo_to_use) {
+  servo_to_use.servo_pin.attach(servo_to_use.pin_servo);
+
+  for(int i = 100; i >= 0; i--) {
+    servo_to_use.servo_pin.write( map( i, 0, 100, servo_to_use.pos_min + servo_to_use.offset, servo_to_use.pos_max + servo_to_use.offset) );
+    delay(15);
+  }
+
+  delay(500);
+  servo_to_use.servo_pin.detach(); 
+}
+
 void init_servovalves(){
 //        variable              Pin servo|Pin close|Pos min|Pos max | Offset |    Nom
     create_servovalve(servo_vrad  ,   11   ,   49   ,  155   ,   50   ,   0   , "Rad"); //ouvert

@@ -9,9 +9,9 @@
 #include "cameras.h"
 #include "sondes.h"
 #include "peltiers.h"
+#include "flowmeters.h"
 #include "vumetre.h"
 #include "servovalves.h"
-#include "flowmeters.h"
 
 LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 
@@ -147,6 +147,10 @@ void set_camera(void) {
 
 void set_mode (void) { 
 
+  static int is_TEC_ON = 0;
+  static int nb_TEC_ON = 0;
+  static unsigned long last_start = 0;
+
   int nb_appuye = 0;
   Mode *mode_appuye;
   for (int i = 0; i < nb_modes; ++i){
@@ -155,6 +159,7 @@ void set_mode (void) {
       mode_appuye = modes[i];
     }
   }
+
 
   // si on a bien un seul bouton appuyé
   if (nb_appuye == 1){
@@ -178,6 +183,53 @@ void set_mode (void) {
     delay(500);
     lcd.clear();
   }
+
+  if(selected_mode == (&mode_extreme) && (digitalRead(sw_tec) == HIGH)) {
+    if (is_TEC_ON == 0) {
+      digitalWrite(tec_pump, HIGH);
+
+      open_servo(servo_vtec);
+      close_servo(servo_vrad);
+
+      is_TEC_ON = 1;
+      digitalWrite(peltiers[0]->pin_out, HIGH);
+      last_start = millis();
+      nb_TEC_ON = 1;
+
+    } else {
+
+      if(temp_pc_case.val - temp_wtr_in_pc.val < 8 && nb_TEC_ON < nb_peltier && millis() - last_start > 3000) {
+        last_start = millis();
+        digitalWrite(peltiers[nb_TEC_ON]->pin_out, HIGH);
+        nb_TEC_ON ++;
+
+      } else if(temp_pc_case.val - temp_wtr_in_pc.val > 10 && nb_TEC_ON > 0) {
+        nb_TEC_ON --;
+        digitalWrite(peltiers[nb_TEC_ON]->pin_out, LOW);
+
+      }
+
+    }
+
+  } else if (is_TEC_ON == 1) {
+    digitalWrite(tec_pump, LOW);
+
+    is_TEC_ON = 0;
+    nb_TEC_ON = 0;
+
+    for (int i = 0; i < nb_peltier; ++i) {
+      digitalWrite(peltiers[i]->pin_out, LOW);
+    }
+
+    analogWrite(vu_tec.pin_out, mapfloat( nb_TEC_ON, 0, nb_peltier, 0, 255));  
+
+    open_servo(servo_vrad);
+    close_servo(servo_vtec);
+
+  }
+
+  analogWrite(vu_tec.pin_out, mapfloat( nb_TEC_ON, 0, nb_peltier, 0, 255));  
+
 }
 // __________ Gestion mode de fonctionnement, allumage LED et inscription LCD __________
 
@@ -202,9 +254,11 @@ void lcd_temp_draw (void) {
  
   static int screens=0; //Compteur pour changer d'écran
   static int yazop = 0; //Pour fonctionnement du bouton "next" au relachement
+  static int yazop2 = 0; //Pour fonctionnement du bouton "next" au relachement
 
-  if (digitalRead(btn_next) == HIGH)
+  if (digitalRead(btn_next) == HIGH){
     yazop = 1;
+  }
 
   if ( digitalRead(btn_next)==LOW && yazop==1 ) {
     //Serial.println(screens);
@@ -223,6 +277,30 @@ void lcd_temp_draw (void) {
 
     yazop=0;
   }
+
+
+  if (digitalRead(btn_prev) == HIGH){
+    yazop2 = 1;
+  }
+
+  if ( digitalRead(btn_prev)==LOW && yazop2==1 ) {
+    //Serial.println(screens);
+    
+    screens--;
+    if (screens < 0 || screens > nb_sondes){
+      screens = nb_sondes;
+    }
+
+    if (screens == 0){ // on eteind l'ecran
+      lcd.clear();
+    }
+    else {
+      lcd_print_sonde(sondes[screens - 1]); //Affichage de l'écran demandé
+    }
+
+    yazop2=0;
+  }
+
   
   static long unsigned last_refresh = 0;
   if (screens > 0 && (millis()/250) - last_refresh > 1){
@@ -333,7 +411,7 @@ void setup (void)
   init_peltiers();
   init_vumetres();
   init_servovalves();
-
+  init_flowmeters();
 
 }
 // _______________________________________ Setup _______________________________________
@@ -356,6 +434,7 @@ void loop (void) {
 //  Serial.print (Calc, DEC); //Prints the number calculated above
 //  Serial.print (" L/min\r\n"); //Prints "L/hour" and returns a  new line
   
+
 
   //digitalWrite(tec_pump, HIGH); //Allume pompe TEC
 

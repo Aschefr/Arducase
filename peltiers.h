@@ -7,11 +7,14 @@
 //============================================================================================================//
 // ___________________________________________ PELTIERS __________________________________________________
 #define MAX_NB_TEC 6
+
 typedef struct Peltier{
   int pin_out;
   char *name;
 } Peltier;
 
+extern int nb_peltier;
+extern Peltier *peltiers[MAX_NB_TEC];
 
 
 void create_peltier(struct Peltier &peltier, int pin_out, char *name);

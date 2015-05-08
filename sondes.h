@@ -7,7 +7,8 @@
 //=============================================================================================================//
 // _______________________________________ THERMALS SENSORS __________________________________________________
 #define MAX_NB_THERMAL 10
-#define PRECISION_SONDE 0.5 // precision de la sonde en degree celsuis
+#define PRECISION_SONDE 0.1 // precision de la sonde en degree celsuis
+#define NB_HISTO_SONDE 50 // precision de la sonde en degree celsuis
 
 typedef struct Termal_sensor {
   int pin; // on c'est branché
@@ -17,6 +18,9 @@ typedef struct Termal_sensor {
   int seuil_bas;
   int raw; // valeur brute lue
   float val; // valeur traduite en celcius
+
+  float histo_val[NB_HISTO_SONDE];
+  int last_histo;
 
   // ventilos associé a cette sonde
   Ventilo* ventilos[MAX_NB_VENTILO];
@@ -31,6 +35,7 @@ extern int nb_sondes;
 extern Termal_sensor temp_wtr_out_pc;
 extern Termal_sensor temp_wtr_out_pcrad;
 extern Termal_sensor temp_wtr_in_pc;
+extern Termal_sensor temp_pc_case;
 
 extern void thermals_save();
 

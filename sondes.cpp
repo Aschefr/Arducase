@@ -22,7 +22,7 @@ Termal_sensor temp_gpu;
 Termal_sensor temp_wtr_out_pcrad; 
 Termal_sensor temp_pc_case; 
 Termal_sensor temp_tec_hot; 
-Termal_sensor temp_tec_cold; 
+Termal_sensor temp_tec_cold;
 Termal_sensor temp_wtr_tec_hot; 
 Termal_sensor temp_wc_case; 
 
@@ -49,6 +49,12 @@ void create_thermal(struct Termal_sensor &sensor, int pin_number, char *name, in
   sensor.seuil_bas = seuil_bas;
 
   sensor.nb_ventilos = 0;
+
+  for (int i = 0; i < NB_HISTO_SONDE; ++i) {
+    sensor.histo_val[i] = 0;
+  }
+  sensor.last_histo = 0;
+
 }
 
 void add_ventilo_to_sonde(struct Termal_sensor &sensor, struct Ventilo &ventilo){
@@ -65,16 +71,16 @@ void init_thermals(){
 
   // _________________________________ Gestion des sondes thermiques _____________________________________________
   //              variable            pin  name              offset     seuil_bas      seuil_haut
-  create_thermal(temp_wtr_in_pc      , 1 , "wtr_in_pc"      , -3        , 25              , 40); //température eau entrée pc
-  create_thermal(temp_wtr_out_pc     , 2 , "wtr_out_pc"     , -3        , 25              , 40); //température eau sortie pc
-  //create_thermal(temp_cpu            , 3 , "cpu"            , 0        , 30              , 40); //température au contact du CPU
-  create_thermal(temp_gpu            , 4 , "gpu"            , 4        , 45              , 55); //température au contact des ram GPU
-  create_thermal(temp_wtr_out_pcrad  , 5 , "wtr_out_pcrad"  , -3        , 30              , 30); //température eau sortie du radiateur PC
-  create_thermal(temp_pc_case        , 6 , "pc_case"        , -2.5        , 30              , 35); //température à l'intérieur du PC
-  create_thermal(temp_tec_hot        , 7 , "tec_hot"        , -3        , 30              , 35); //température du waterblock peltier face chaude
-  create_thermal(temp_tec_cold       , 8 , "tec_cold"       , -3.5        , 30              , 30); //température du waterblock peltier face froide
-  create_thermal(temp_wtr_tec_hot    , 9 , "wtr_tec_hot"    , -3        , 32              , 40); //température eau boucle peltier chaud
-  create_thermal(temp_wc_case        , 10, "wc_case"        , -2.5        , 25              , 30); //température dans la watercase
+  create_thermal(temp_wtr_in_pc      , 1 , "wtr_in_pc"      , -3        , 24.5            , 40); //température eau entrée pc
+  create_thermal(temp_wtr_out_pc     , 2 , "wtr_out_pc"     , -3        , 24.5            , 40); //température eau sortie pc
+  //create_thermal(temp_cpu            , 3 , "cpu"            , 0       , 30              , 40); //température au contact du CPU
+  create_thermal(temp_gpu            , 4 , "gpu"            , 4         , 45              , 55); //température au contact des ram GPU
+  create_thermal(temp_wtr_out_pcrad  , 5 , "wtr_out_pcrad"  , -3        , 27              , 30); //température eau sortie du radiateur PC
+  create_thermal(temp_pc_case        , 6 , "pc_case"        , -2.5      , 27              , 35); //température à l'intérieur du PC
+  create_thermal(temp_tec_hot        , 7 , "tec_hot"        , -3        , 27              , 35); //température du waterblock peltier face chaude
+  create_thermal(temp_tec_cold       , 8 , "tec_cold"       , -3.5      , 27              , 30); //température du waterblock peltier face froide
+  create_thermal(temp_wtr_tec_hot    , 9 , "wtr_tec_hot"    , -3        , 30              , 40); //température eau boucle peltier chaud
+  create_thermal(temp_wc_case        , 10, "wc_case"        , -2.5      , 25              , 30); //température dans la watercase
 
   // _________________________________ Association des sondes thermiques avec les ventilos _____________________________________________
   //                   sonde              ventilos
@@ -109,12 +115,28 @@ void read_and_convert_termal_sensor(struct Termal_sensor &sensor){
 
   Temp = Temp + sensor.offset; // on applique l'offset
 
-  if (sensor.val < -299.00)
-    sensor.val = Temp; // on initialise sensor.val pour la première fois !
-  else if (Temp + PRECISION_SONDE > sensor.val || Temp - PRECISION_SONDE < sensor.val) // si on s'éloigne de plus de 0.50 de la dernière valeur
-    sensor.val = Temp; // alors on change la valeur
+  // sauvegarde de l'historique
+  sensor.last_histo++;
+  if(sensor.last_histo == NB_HISTO_SONDE) {
+    sensor.last_histo = 0;
+  }
+  sensor.histo_val[sensor.last_histo] = Temp;
+  
+  // reprise de la valeur moyenne pour la suite :-)
+  Temp = 0;
+  for (int i = 0; i < NB_HISTO_SONDE; ++i) {
+    Temp += sensor.histo_val[i];
+  }
+  Temp = Temp / NB_HISTO_SONDE;
 
-  if (sensor.val > sensor.seuil_haut){
+  // apprication du filtrage de precision de sonde (petites fluctuations)
+  if (sensor.val < -299.00) {
+    sensor.val = Temp; // on initialise sensor.val pour la première fois !
+  } else if (Temp > sensor.val + PRECISION_SONDE || Temp < sensor.val - PRECISION_SONDE) {// si on s'éloigne de plus de X de la dernière valeur
+    sensor.val = Temp; // alors on change la valeur
+  }
+
+  if (sensor.val > sensor.seuil_haut) {
     int max = percent_to_PWM(selected_mode->pourcentage_max);
     for (int i = 0; i < sensor.nb_ventilos; ++i) {
       sensor.ventilos[i]->curent_PWM = max;

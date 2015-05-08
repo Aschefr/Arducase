@@ -19,6 +19,7 @@ extern Mode *selected_mode; // Variable de type "pointeur" vers le mode selectio
 extern Mode *modes[MAX_NB_MODES]; // Tableau de pointeur vers l'objet "Mode", ou plutôt un tableau de pointeur vers les objets "Mode", sert à lister tout les modes, en faire l'inventaire.
 extern int nb_modes; //Variable pour compter le nombre de modes, utilisé plus bas
 
+extern Mode mode_extreme;
 
 /*
  * Fonction permetant de créer un "mode" et initialiser l'objet avec les propriétés définies plus bas dans "Gestion des Modes"

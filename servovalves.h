@@ -25,6 +25,12 @@ void create_servovalve(struct Servovalve &servovalve, int pin_out, int pin_close
 
 void init_servovalves();
 
+void open_servo(struct Servovalve &servo_to_use);
+void close_servo(struct Servovalve &servo_to_use);
+
+extern Servovalve servo_vrad; //Vanne vers radiateur
+extern Servovalve servo_vtec; //Vanne vers TECs (peltier)
+
 // ___________________________________________ PELTIERS __________________________________________________
 //============================================================================================================//
 

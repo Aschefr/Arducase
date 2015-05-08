@@ -5,6 +5,7 @@
 
 #include "vumetre.h"
 #include "sondes.h"
+#include "flowmeters.h"
 
 //============================================================================================================//
 // ___________________________________________ VUMETRES __________________________________________________
@@ -101,8 +102,10 @@ void handle_cpu_mem(){
 
 
   analogWrite(vu_eau.pin_out, mapfloat( temp_wtr_out_pc.val, 15, 40, 0, 255) );
-  //analogWrite(vu_heat.pin_out, mapfloat( (temp_wtr_out_pc.val - temp_wtr_in_pc.val) - (temp_wtr_out_pc.val - temp_wtr_out_pcrad.val), -2.5, 2.5, 0, 255));
-  analogWrite(vu_heat.pin_out, mapfloat( (temp_wtr_out_pc.val - temp_wtr_in_pc.val), -2.5, 2.5, 0, 255));
+  analogWrite(vu_heat.pin_out, mapfloat( (temp_wtr_out_pc.val - temp_wtr_in_pc.val) - (temp_wtr_out_pc.val - temp_wtr_out_pcrad.val), -2.5, 2.5, 0, 255));
+
+  analogWrite(vu_flow.pin_out, mapfloat( mainloop_flow.val, 0, 100, 0, 255));
+  //analogWrite(vu_heat.pin_out, mapfloat( (temp_wtr_out_pc.val - temp_wtr_in_pc.val), -2.5, 2.5, 0, 255));
 
 }
 
