@@ -75,7 +75,7 @@ void init_thermals(){
   create_thermal(temp_wtr_out_pc     , 2 , "wtr_out_pc"     , -3        , 25            , 29); //température eau sortie pc
   //create_thermal(temp_cpu            , 3 , "cpu"            , 0       , 30              , 40); //température au contact du CPU
   create_thermal(temp_gpu            , 4 , "gpu"            , 4         , 41              , 45); //température au contact des ram GPU
-  create_thermal(temp_wtr_out_pcrad  , 5 , "wtr_out_pcrad"  , 0        , 27              , 30); //température eau sortie du radiateur PC
+  create_thermal(temp_wtr_out_pcrad  , 5 , "wtr_out_pcrad"  , -3        , 27              , 30); //température eau sortie du radiateur PC
   create_thermal(temp_pc_case        , 6 , "pc_case"        , -2.5      , 27              , 35); //température à l'intérieur du PC
   create_thermal(temp_tec_hot        , 7 , "tec_hot"        , -3        , 27              , 35); //température du waterblock peltier face chaude
   create_thermal(temp_tec_cold       , 8 , "tec_cold"       , -3.5      , 27              , 30); //température du waterblock peltier face froide
