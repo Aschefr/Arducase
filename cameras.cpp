@@ -11,7 +11,7 @@
 
 extern Ventilo vent_pc;
 extern Ventilo vent_rad;
-extern Ventilo vent_wc;
+extern Ventilo vent_tec;
 
 
 // Définition des cameras  (déclaration des variables pour chaque camera)
@@ -63,7 +63,7 @@ void init_cameras(){
   // _________________________________ Association des cameras avec les ventilos _____________________________________________
   //                  cam        ventilos
   add_cam_to_ventilo(camera1   , vent_rad);
-  add_cam_to_ventilo(camera2   , vent_wc);
+  add_cam_to_ventilo(camera2   , vent_tec);
   add_cam_to_ventilo(camera3   , vent_pc);
 
 

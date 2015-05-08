@@ -10,8 +10,8 @@
 
 extern Ventilo vent_pc;
 extern Ventilo vent_rad;
-extern Ventilo vent_wc;
-
+extern Ventilo vent_tec;
+extern int nb_TEC_ON;
 
 // ----------------------------------------------------------------------------- Sonde de températures :
 // Définition des sondes de température
@@ -71,11 +71,11 @@ void init_thermals(){
 
   // _________________________________ Gestion des sondes thermiques _____________________________________________
   //              variable            pin  name              offset     seuil_bas      seuil_haut
-  create_thermal(temp_wtr_in_pc      , 1 , "wtr_in_pc"      , -3        , 24.5            , 40); //température eau entrée pc
-  create_thermal(temp_wtr_out_pc     , 2 , "wtr_out_pc"     , -3        , 24.5            , 40); //température eau sortie pc
+  create_thermal(temp_wtr_in_pc      , 1 , "wtr_in_pc"      , -3        , 25            , 40); //température eau entrée pc
+  create_thermal(temp_wtr_out_pc     , 2 , "wtr_out_pc"     , -3        , 25            , 29); //température eau sortie pc
   //create_thermal(temp_cpu            , 3 , "cpu"            , 0       , 30              , 40); //température au contact du CPU
-  create_thermal(temp_gpu            , 4 , "gpu"            , 4         , 45              , 55); //température au contact des ram GPU
-  create_thermal(temp_wtr_out_pcrad  , 5 , "wtr_out_pcrad"  , -3        , 27              , 30); //température eau sortie du radiateur PC
+  create_thermal(temp_gpu            , 4 , "gpu"            , 4         , 41              , 45); //température au contact des ram GPU
+  create_thermal(temp_wtr_out_pcrad  , 5 , "wtr_out_pcrad"  , 0        , 27              , 30); //température eau sortie du radiateur PC
   create_thermal(temp_pc_case        , 6 , "pc_case"        , -2.5      , 27              , 35); //température à l'intérieur du PC
   create_thermal(temp_tec_hot        , 7 , "tec_hot"        , -3        , 27              , 35); //température du waterblock peltier face chaude
   create_thermal(temp_tec_cold       , 8 , "tec_cold"       , -3.5      , 27              , 30); //température du waterblock peltier face froide
@@ -89,10 +89,10 @@ void init_thermals(){
   //add_ventilo_to_sonde(temp_cpu          , vent_rad);
   add_ventilo_to_sonde(temp_gpu          , vent_pc);
   add_ventilo_to_sonde(temp_pc_case      , vent_pc );
-  add_ventilo_to_sonde(temp_tec_hot      , vent_wc );
-  add_ventilo_to_sonde(temp_wtr_tec_hot  , vent_wc );
-  add_ventilo_to_sonde(temp_wc_case      , vent_wc );
 
+  add_ventilo_to_sonde(temp_tec_hot      , vent_tec );
+  add_ventilo_to_sonde(temp_wtr_tec_hot  , vent_tec );
+  add_ventilo_to_sonde(temp_wc_case      , vent_tec );
 
   thermals_save();
 }
@@ -139,17 +139,27 @@ void read_and_convert_termal_sensor(struct Termal_sensor &sensor){
   if (sensor.val > sensor.seuil_haut) {
     int max = percent_to_PWM(selected_mode->pourcentage_max);
     for (int i = 0; i < sensor.nb_ventilos; ++i) {
+      if(nb_TEC_ON == 0 && sensor.ventilos[i]->is_tec) {
+        continue; // no regulation
+      }
+
       sensor.ventilos[i]->curent_PWM = max;
     }
   }
+  else if( sensor.val > sensor.seuil_bas) {
 
-  else if( sensor.val > sensor.seuil_bas){
-
-    int output_PWM = mapfloat(sensor.val, sensor.seuil_bas, sensor.seuil_haut, percent_to_PWM(selected_mode->pourcentage_min) , percent_to_PWM(selected_mode->pourcentage_max) );
-
-
+    int output_PWM = mapfloat(sensor.val, sensor.seuil_bas, sensor.seuil_haut, 0 , 255 );
+    if(output_PWM < percent_to_PWM(selected_mode->pourcentage_min)) {
+      output_PWM = percent_to_PWM(selected_mode->pourcentage_min);
+    } else if(output_PWM > percent_to_PWM(selected_mode->pourcentage_max)) {
+      output_PWM = percent_to_PWM(selected_mode->pourcentage_max);
+    }
 
     for (int i = 0; i < sensor.nb_ventilos; ++i) {
+      if(nb_TEC_ON == 0 && sensor.ventilos[i]->is_tec) {
+        continue; // no regulation
+      }
+
       if (output_PWM > sensor.ventilos[i]->curent_PWM){
         sensor.ventilos[i]->curent_PWM = output_PWM;
       }

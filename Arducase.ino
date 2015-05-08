@@ -16,6 +16,9 @@
 LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 
 
+int is_TEC_ON = 0;
+int nb_TEC_ON = 0;
+
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
 
 
@@ -58,51 +61,54 @@ const int tec_pump = 52; //Sortie pour pompe refroidissement TEC face chaude.
 // ________________________________ Gestion caméras _______________________________________
 
 void set_camera(void) {
+  
+  unsigned long now = millis();
 
-  if (digitalRead(sw_video_auto) == 0) { //Mode Manuel
-
-    int nb_appuye = 0;
-    Camera *camera_appuye;
-    for (int i = 0; i < nb_cam; ++i){
-      if (digitalRead(cameras[i]->pin_button) == HIGH){
-        nb_appuye++;
-        camera_appuye = cameras[i];
-      }
-    }
-
-    // si on a bien un boutons appuyé
-    if (nb_appuye == 1){
-
-      // on eteinds toutes les leds du même groupe
-      for (int i = 0; i < nb_cam; ++i){
-        if (cameras[i]->groupe == camera_appuye->groupe){
-          digitalWrite(cameras[i]->pin_led, LOW);
-          if (cameras[i]->pin_led != camera_appuye->pin_led){
-            cameras[i]->current_val = 0;
-          }
-        }
-      }
-
-      // on ralume la camera appuyé si elle n'était pas déjà selectionné
-      if(camera_appuye->current_val == 0) {
-        digitalWrite(camera_appuye->pin_led, HIGH);
-      }
-      camera_appuye->current_val = 1 - camera_appuye->current_val;
-
-      // on affiche le changement de cam
-      lcd.clear();
-      lcd.setCursor(0, 0);
-      lcd.println(camera_appuye->name);
-      //lcd.setCursor(0, 1);
-      //lcd.print("Load");
-
-      delay(500);
-      lcd.clear();
+  int nb_appuye = 0;
+  Camera *camera_appuye;
+  for (int i = 0; i < nb_cam; ++i){
+    if (digitalRead(cameras[i]->pin_button) == HIGH){
+      nb_appuye++;
+      camera_appuye = cameras[i];
     }
   }
-  else if (digitalRead(sw_video_auto) == 1) { //Mode Auto
 
-    unsigned long now = millis();
+  // si on a bien un boutons appuyé
+  if (nb_appuye == 1){
+
+    // on eteinds toutes les leds du même groupe
+    for (int i = 0; i < nb_cam; ++i){
+      if (cameras[i]->groupe == camera_appuye->groupe){
+        digitalWrite(cameras[i]->pin_led, LOW);
+        if (cameras[i]->pin_led != camera_appuye->pin_led){
+          cameras[i]->current_val = 0;
+        }
+      }
+    }
+
+    // on ralume la camera appuyé si elle n'était pas déjà selectionné
+    if(camera_appuye->current_val == 0) {
+      digitalWrite(camera_appuye->pin_led, HIGH);
+    }
+    camera_appuye->current_val = 1 - camera_appuye->current_val;
+
+    // on affiche le changement de cam
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.println(camera_appuye->name);
+    //lcd.setCursor(0, 1);
+    //lcd.print("Load");
+    delay(500);
+    lcd.clear();
+
+    if (digitalRead(sw_video_auto) == 1) { //Mode Auto
+      camera_appuye->auto_time = now + AUTO_TIME_CAM;
+    }
+  }
+
+
+  if (digitalRead(sw_video_auto) == 1) { //Mode Auto
+
 
     for (int i = 0; i < nb_cam; ++i) {
       if( cameras[i]->fresh_boosted > 0 ) {
@@ -147,8 +153,6 @@ void set_camera(void) {
 
 void set_mode (void) { 
 
-  static int is_TEC_ON = 0;
-  static int nb_TEC_ON = 0;
   static unsigned long last_start = 0;
 
   int nb_appuye = 0;
@@ -163,25 +167,7 @@ void set_mode (void) {
 
   // si on a bien un seul bouton appuyé
   if (nb_appuye == 1){
-    // on set le mode actuel
-    selected_mode = mode_appuye;
-
-    // on eteinds toutes les leds
-    for (int i = 0; i < nb_modes; ++i){
-      digitalWrite(modes[i]->pin_led, LOW);
-    }
-    // on ralume le mode selectionné
-    digitalWrite(selected_mode->pin_led, HIGH);
-
-    // on affiche engage
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print(selected_mode->name);
-    lcd.setCursor(0, 1);
-    lcd.print("Engage");
-
-    delay(500);
-    lcd.clear();
+    switch_mode(mode_appuye);
   }
 
   if(selected_mode == (&mode_extreme) && (digitalRead(sw_tec) == HIGH)) {
@@ -237,10 +223,49 @@ void set_mode (void) {
 
 void thermals_save (void) { //Enregistrement température en Celsius dans chaque variables
 
+  static unsigned long last_time = millis();
+  static int last_status = 0;
+
+
   init_ventilo_regulation();
 
   for (int i = 0; i < nb_sondes; ++i){
     read_and_convert_termal_sensor(*sondes[i]);
+  }
+
+  if(digitalRead(sw_cooling_auto) == HIGH) {
+
+    int max = 0;
+    int min = 0;
+
+    for (int i = 0; i < nb_ventilos; ++i){
+      if (ventilos[i]->curent_PWM >= percent_to_PWM(selected_mode->pourcentage_max)) {
+        max = 1;
+        break;
+      } else if (ventilos[i]->curent_PWM <= percent_to_PWM(selected_mode->pourcentage_min)) {
+        min ++;
+      }
+    }
+    if(max == 1) {
+      if(last_status == 0) {
+        last_time = millis();
+        last_status = 1;
+      } else if (millis() - last_time > 30 * 1000) {
+        mode_up();
+        last_status = 0;
+      }
+    } else if ( min == nb_ventilos){
+      if(last_status == 0) {
+        last_time = millis();
+        last_status = -1;
+      } else if (millis() - last_time > 30 * 1000) {
+        mode_down();
+        last_status = 0;
+      }
+    } else {
+      last_status = 0;
+    }
+
   }
 
   finish_ventilo_regulation();
@@ -269,7 +294,7 @@ void lcd_temp_draw (void) {
     }
 
     if (screens == 0){ // on eteind l'ecran
-      lcd.clear();
+      screen_saver();
     }
     else {
       lcd_print_sonde(sondes[screens - 1]); //Affichage de l'écran demandé
@@ -292,7 +317,7 @@ void lcd_temp_draw (void) {
     }
 
     if (screens == 0){ // on eteind l'ecran
-      lcd.clear();
+      screen_saver();
     }
     else {
       lcd_print_sonde(sondes[screens - 1]); //Affichage de l'écran demandé
@@ -303,42 +328,55 @@ void lcd_temp_draw (void) {
 
   
   static long unsigned last_refresh = 0;
-  if (screens > 0 && (millis()/250) - last_refresh > 1){
+  if((millis()/250) - last_refresh > 1) {
     last_refresh = (millis()/250);
+    
+    if (screens == 0) {
+      screen_saver();
+    } else {
 
-    lcd_print_sonde(sondes[screens - 1]);
+      lcd_print_sonde(sondes[screens - 1]);
 
-  /*if (last_refresh > 30000)
-    last_refresh = 0;
-    */
+    /*if (last_refresh > 30000)
+      last_refresh = 0;
+      */
 
-    #if DEBUG 
-      Serial.print(sondes[screens - 1]->name);
-      Serial.print(" = ");
-      Serial.print(sondes[screens - 1]->val);
-      Serial.println(" °C");
-
-      Serial.print("millis_func = ");
-      Serial.println(millis());
-
-      Serial.print("last_refresh = ");
-      Serial.println(last_refresh);
-
-      for (int i = 0; i < sondes[screens - 1]->nb_ventilos; ++i){
-
-        Serial.print("=> ");
-        Serial.print(sondes[screens - 1]->ventilos[i]->name);
+      #if DEBUG 
+        Serial.print(sondes[screens - 1]->name);
         Serial.print(" = ");
-        Serial.print(PWM_to_percent( sondes[screens - 1]->ventilos[i]->curent_PWM ));
-        Serial.println("%");
-      }
-    #endif
+        Serial.print(sondes[screens - 1]->val);
+        Serial.println(" °C");
+
+        Serial.print("millis_func = ");
+        Serial.println(millis());
+
+        Serial.print("last_refresh = ");
+        Serial.println(last_refresh);
+
+        for (int i = 0; i < sondes[screens - 1]->nb_ventilos; ++i){
+
+          Serial.print("=> ");
+          Serial.print(sondes[screens - 1]->ventilos[i]->name);
+          Serial.print(" = ");
+          Serial.print(PWM_to_percent( sondes[screens - 1]->ventilos[i]->curent_PWM ));
+          Serial.println("%");
+        }
+      #endif
+    }
   }
 
 }
 // ________________ Affichage des temps sur LCD avec bouton Refresh ______________________
 //=========================================================================================//
 
+
+void screen_saver() {
+  lcd.clear();
+  lcd.setCursor(0, 0); //selection première ligne
+  lcd.print("Holblin !"); //afficher le contenu de "nom_sonde"
+  lcd.setCursor(11, 0); //selection deuxième ligne
+  lcd.print(temp_wtr_out_pc.val); //afficher le contenu de "temperature"
+}
 
 // ________________ Calcul flow ______________________
 //=====================================================//

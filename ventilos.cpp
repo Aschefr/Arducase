@@ -10,13 +10,13 @@
 
 Ventilo vent_pc;
 Ventilo vent_rad;
-Ventilo vent_wc;
+Ventilo vent_tec;
 
 Ventilo *ventilos[MAX_NB_VENTILO];
 int nb_ventilos = 0;
+extern int nb_TEC_ON;
 
-
-void create_ventilo(struct Ventilo &ventilo, int pin, char *name){
+void create_ventilo(struct Ventilo &ventilo, int pin, char *name, int is_tec){
   if (nb_ventilos + 1 > MAX_NB_VENTILO){
     return;
   }
@@ -28,6 +28,8 @@ void create_ventilo(struct Ventilo &ventilo, int pin, char *name){
   ventilo.name = name;
   ventilo.curent_PWM = 0;
   ventilo.last_PWM = 0;
+  ventilo.is_tec = is_tec;
+
 
   ventilo.nb_cam = 0;
 }
@@ -36,9 +38,9 @@ void init_ventilos(){
 
   // _________________________________ Gestion des Ventilos _____________________________________________
   //             variable   pin   nom
-  create_ventilo(vent_pc  , 2  , "vent_pc"  ); //Groupe de ventilateur à l'intérieur du pc
-  create_ventilo(vent_rad , 3  , "vent_rad" ); //Groupe de ventilateur du radiateur PC
-  create_ventilo(vent_wc  , 5  , "vent_wc"  ); //Groupe de ventilateur de la watercase
+  create_ventilo(vent_pc  , 2  , "vent_pc"  , 0); //Groupe de ventilateur à l'intérieur du pc
+  create_ventilo(vent_rad , 3  , "vent_rad" , 0); //Groupe de ventilateur du radiateur PC
+  create_ventilo(vent_tec , 5  , "vent_tec" , 1); //Groupe de ventilateur de la watercase
 }
 
 
@@ -46,7 +48,11 @@ void init_ventilo_regulation(){
   int min = percent_to_PWM(selected_mode->pourcentage_min);
   for (int i = 0; i < nb_ventilos; ++i) {
     ventilos[i]->last_PWM = ventilos[i]->curent_PWM;
-    ventilos[i]->curent_PWM = min;
+    if (nb_TEC_ON == 0 && ventilos[i]->is_tec) {
+      ventilos[i]->curent_PWM = 0;
+    } else {
+      ventilos[i]->curent_PWM = min;
+    }
   }
 }
 void finish_ventilo_regulation(){

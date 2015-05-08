@@ -47,13 +47,54 @@ void init_modes(){
 
   // _________________________________ Gestion des Modes _____________________________________________
   //          variable        btn led    nom        min  max
-  create_mode(mode_silent   , 23, 22, "Silent"    , 0 , 30  ); //En mode Silent, pourcentage de marche ventilateur maximal
-  create_mode(mode_normal   , 25, 24, "Normal"    , 0 , 80  ); //En mode Normal, pourcentage de marche ventilateur maximal
-  create_mode(mode_heavy    , 27, 26, "Heavy"     , 20 , 100  ); //En mode Heavy, pourcentage de marche ventilateur maximal
-  create_mode(mode_extreme  , 29, 28, "Extreme"   , 90 , 100 ); //En mode Extreme, pourcentage de marche ventilateur maximal
+  create_mode(mode_silent   , 23, 22, "Silent"    , 0  , 30  ); //En mode Silent, pourcentage de marche ventilateur maximal
+  create_mode(mode_normal   , 25, 24, "Normal"    , 30 , 50  ); //En mode Normal, pourcentage de marche ventilateur maximal
+  create_mode(mode_heavy    , 27, 26, "Heavy"     , 50 , 70  ); //En mode Heavy, pourcentage de marche ventilateur maximal
+  create_mode(mode_extreme  , 29, 28, "Extreme"   , 70 , 100 ); //En mode Extreme, pourcentage de marche ventilateur maximal
 
   // alume la led du mode selectionné dès le debut
   digitalWrite(selected_mode->pin_led, HIGH);
 }
+
+void mode_up() {
+  for (int i = 0; i < nb_modes - 1; ++i){
+    if(selected_mode == modes[ i ]) {
+      switch_mode(modes[ i + 1 ]);
+      return;
+    }
+  }
+}
+void mode_down() {
+  for (int i = 1; i < nb_modes ; ++i){
+    if(selected_mode == modes[ i ]) {
+      switch_mode(modes[ i - 1 ]);
+      return;
+    }
+  }
+}
+
+void switch_mode(Mode *mode_appuye) {
+
+    // on set le mode actuel
+    selected_mode = mode_appuye;
+
+      // on eteinds toutes les leds
+    for (int i = 0; i < nb_modes; ++i){
+      digitalWrite(modes[i]->pin_led, LOW);
+    }
+    // on ralume le mode selectionné
+    digitalWrite(selected_mode->pin_led, HIGH);
+
+    // on affiche engage
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(selected_mode->name);
+    lcd.setCursor(0, 1);
+    lcd.print("Engage");
+
+    delay(500);
+    lcd.clear();
+}
+
 // _______________________________________ REGULATION MODE __________________________________________________
 //============================================================================================================//

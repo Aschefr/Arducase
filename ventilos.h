@@ -11,12 +11,17 @@ typedef struct Ventilo {
   int pin;
   char *name;
 
+  int is_tec;
+
   int curent_PWM;
   int last_PWM; // ancien curent_PWM (pour gestion du boost)
 
   int nb_cam;
   Camera *cameras[MAX_NB_CAM];
 } Ventilo;
+
+extern int nb_ventilos;
+extern Ventilo *ventilos[MAX_NB_VENTILO];
 
 void create_ventilo(struct Ventilo &ventilo, int pin, char *name);
 

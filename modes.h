@@ -26,6 +26,9 @@ extern Mode mode_extreme;
  */
 void create_mode(struct Mode &mode, int pin_button, int pin_led, char *name, int pourcentage_min = 0, int pourcentage_max = 100);
 void init_modes();
+void switch_mode(Mode *mode_appuye);
+void mode_up();
+void mode_down();
 // _______________________________________ REGULATION MODE __________________________________________________
 //============================================================================================================//
 
