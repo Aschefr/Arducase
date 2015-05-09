@@ -22,6 +22,9 @@ typedef struct Ventilo {
 
 extern int nb_ventilos;
 extern Ventilo *ventilos[MAX_NB_VENTILO];
+extern Ventilo vent_pc;
+extern Ventilo vent_rad;
+extern Ventilo vent_tec;
 
 void create_ventilo(struct Ventilo &ventilo, int pin, char *name);
 

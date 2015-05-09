@@ -52,6 +52,16 @@ void open_servo(struct Servovalve &servo_to_use) {
 
   for(int i = 0; i <= 100; i++) {
     servo_to_use.servo_pin.write( map( i, 0, 100, servo_to_use.pos_min + servo_to_use.offset, servo_to_use.pos_max + servo_to_use.offset) );
+
+    lcd.setCursor(0, 0);
+    lcd.print(servo_to_use.name);
+    lcd.setCursor(0, 1);
+    lcd.print("Opening : ");
+    lcd.setCursor(10, 1);
+    lcd.print("   ");
+    lcd.setCursor(10, 1);
+    lcd.print(i);
+
     delay(15);
   }
 
@@ -64,6 +74,16 @@ void close_servo(struct Servovalve &servo_to_use) {
 
   for(int i = 100; i >= 0; i--) {
     servo_to_use.servo_pin.write( map( i, 0, 100, servo_to_use.pos_min + servo_to_use.offset, servo_to_use.pos_max + servo_to_use.offset) );
+
+    lcd.setCursor(0, 0);
+    lcd.print(servo_to_use.name);
+    lcd.setCursor(0, 1);
+    lcd.print("Closing : ");
+    lcd.setCursor(10, 1);
+    lcd.print("   ");
+    lcd.setCursor(10, 1);
+    lcd.print(i);
+
     delay(15);
   }
 
@@ -80,10 +100,10 @@ void init_servovalves(){
 
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.println("Initialisation    ");
+      lcd.print("Initialisation");
 
       lcd.setCursor(0, 1);
-      lcd.println("valve position    ");
+      lcd.print("valve position");
 
   // bouger de max vers min et s'arreter des qu'on trouve la fin de course, et enregistrer cette position.
   Servovalve* servo; //Servovalve* est un type, comme "int"
@@ -106,34 +126,34 @@ void init_servovalves(){
       servo->pos_min = servo->pos_max; // PROBLEME LECTURE CAPTEUR ou SERVO !!!
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.println("Def ");
+      lcd.print("Def ");
       lcd.setCursor(4, 0);
-      lcd.println(servo->name);
+      lcd.print(servo->name);
       lcd.setCursor(14, 0);
-      lcd.println("  ");      
+      lcd.print("  ");      
       lcd.setCursor(0, 1);
-      lcd.println("Open bypass vlve");
+      lcd.print("Open bypass vlve");
       
     } else {
       servo->pos_min = j + servo->offset;
       //affichage pos_min premier servo
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.println(servo_vrad.name);
+      lcd.print(servo_vrad.name);
       lcd.setCursor(3, 0);
-      lcd.println(" clse pos  ");
+      lcd.print(" clse pos  ");
       lcd.setCursor(13, 0);
-      lcd.println(servo_vrad.pos_min);
+      lcd.print(servo_vrad.pos_min);
 
       //affichage pos_min second servo
       lcd.setCursor(0, 1);
-      lcd.println(servo_vtec.name);
+      lcd.print(servo_vtec.name);
       lcd.setCursor(3, 1);
-      lcd.println(" clse pos  ");
+      lcd.print(" clse pos  ");
       lcd.setCursor(13, 1);
-      lcd.println(servo_vtec.pos_min);
+      lcd.print(servo_vtec.pos_min);
       lcd.setCursor(15, 1);
-      lcd.println("   ");
+      lcd.print("   ");
 
     }
 

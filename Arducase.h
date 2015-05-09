@@ -9,6 +9,8 @@
 //#include <string.h>
 // initialize the library with the numbers of the interface pins
 extern LiquidCrystal lcd;
+extern int is_TEC_ON;
+
 // _______________________________________ LCD __________________________________________________
 //================================================================================================//
 

@@ -16,6 +16,8 @@
 LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 
 
+
+
 int is_TEC_ON = 0;
 int nb_TEC_ON = 0;
 
@@ -95,7 +97,7 @@ void set_camera(void) {
     // on affiche le changement de cam
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.println(camera_appuye->name);
+    lcd.print(camera_appuye->name);
     //lcd.setCursor(0, 1);
     //lcd.print("Load");
     delay(500);
@@ -184,12 +186,13 @@ void set_mode (void) {
 
     } else {
 
-      if(temp_pc_case.val - temp_wtr_in_pc.val < 8 && nb_TEC_ON < nb_peltier && millis() - last_start > 3000) {
+      if(temp_pc_case.val - temp_wtr_in_pc.val < 2 && nb_TEC_ON < nb_peltier && millis() - last_start > 10000) {
         last_start = millis();
         digitalWrite(peltiers[nb_TEC_ON]->pin_out, HIGH);
         nb_TEC_ON ++;
 
-      } else if(temp_pc_case.val - temp_wtr_in_pc.val > 10 && nb_TEC_ON > 0) {
+      } else if(temp_pc_case.val - temp_wtr_in_pc.val > 3 && nb_TEC_ON > 0 && millis() - last_start > 10000) {
+        last_start = millis();
         nb_TEC_ON --;
         digitalWrite(peltiers[nb_TEC_ON]->pin_out, LOW);
 
@@ -198,7 +201,6 @@ void set_mode (void) {
     }
 
   } else if (is_TEC_ON == 1) {
-    digitalWrite(tec_pump, LOW);
 
     is_TEC_ON = 0;
     nb_TEC_ON = 0;
@@ -212,6 +214,7 @@ void set_mode (void) {
     open_servo(servo_vrad);
     close_servo(servo_vtec);
 
+    digitalWrite(tec_pump, LOW);
   }
 
   analogWrite(vu_tec.pin_out, mapfloat( nb_TEC_ON, 0, nb_peltier, 0, 255));  
@@ -373,9 +376,30 @@ void lcd_temp_draw (void) {
 void screen_saver() {
   lcd.clear();
   lcd.setCursor(0, 0); //selection première ligne
-  lcd.print("Holblin !"); //afficher le contenu de "nom_sonde"
-  lcd.setCursor(11, 0); //selection deuxième ligne
+  //lcd.print("Pc____Rad____Tec"); //afficher le contenu de "nom_sonde"
+  lcd.print("Eau : "); //afficher le contenu de "nom_sonde"  
+  lcd.setCursor(6, 0); //
   lcd.print(temp_wtr_out_pc.val); //afficher le contenu de "temperature"
+  //lcd.setCursor(11, 0);
+  //lcd.print(" C");
+
+  lcd.setCursor(0, 1); //
+  lcd.print("R:");
+  lcd.setCursor(2, 1); //
+  lcd.print(PWM_to_percent(vent_rad.curent_PWM));
+  
+  lcd.setCursor(6, 1); //
+  lcd.print("P:");
+  lcd.setCursor(8, 1); //
+  lcd.print(PWM_to_percent(vent_pc.curent_PWM));
+  
+  lcd.setCursor(11, 1); //
+  lcd.print("T:");
+  lcd.setCursor(13, 1); //
+  lcd.print(PWM_to_percent(vent_tec.curent_PWM));
+
+
+
 }
 
 // ________________ Calcul flow ______________________
@@ -475,6 +499,7 @@ void loop (void) {
 
 
   //digitalWrite(tec_pump, HIGH); //Allume pompe TEC
+  Serial.println(millis());
 
 }
 // _______________________________________ Main Loop _______________________________________
