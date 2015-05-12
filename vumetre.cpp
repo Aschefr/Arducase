@@ -17,6 +17,8 @@ Vumetre vu_flow;
 Vumetre vu_heat;
 Vumetre vu_tec;
 
+extern int screens;
+
 Vumetre *vumetres[MAX_NB_VUMETRE];
 int nb_vumetre = 0;
 
@@ -100,18 +102,59 @@ void handle_cpu_mem(){
     memset(buffer, ' ', 5);
   }
 
+//__________Pour vumeter "Water Heating", calcul de l'écart entre x lectures_______
 
 
 
-if(is_TEC_ON == 0) {
+  static unsigned long last_time = millis(); //use to be last_time
+  static float last_vals[TIME_BTW_TWO_READ];
+  static int curent = TIME_BTW_TWO_READ;
 
-    analogWrite( vu_heat.pin_out, mapfloat (temp_wtr_out_pc.val - temp_wtr_out_pcrad.val , -2.5, 2.5, 0, 255));
-  
+  Termal_sensor *sonde;
+
+  if(screens == 0) {
+    sonde = (&temp_wtr_out_pc);
   } else {
-
-    analogWrite( vu_heat.pin_out, mapfloat (temp_tec_cold.val - temp_wtr_out_pc.val, -2.5, 2.5, 0, 255));
-
+    sonde = sondes[screens - 1];
   }
+
+  if (curent == TIME_BTW_TWO_READ && sonde->val > 1 ) {
+    for (int i = 0; i < TIME_BTW_TWO_READ; ++i) {
+      last_vals[i] = sonde->val;
+    }
+    curent = 0;
+  }
+
+  if(millis() >= last_time + (1000)) {
+    
+    float ecart = sonde->val - last_vals[curent];
+
+    analogWrite( vu_heat.pin_out, mapfloat (ecart , -2.5, 2.5, 0, 249));
+    //Serial.println(ecart);
+
+    last_time = millis();
+    last_vals[curent] = sonde->val;
+    curent++;
+    if(curent >= TIME_BTW_TWO_READ) {
+      curent = 0;
+    }
+  }
+
+
+
+//__________Pour vumeter "Water Heating", calcul de l'écart entre deux lectures_______
+
+
+
+//if(is_TEC_ON == 0) {
+//
+//    analogWrite( vu_heat.pin_out, mapfloat (temp_wtr_out_pc.val - temp_wtr_out_pcrad.val , -2.5, 2.5, 0, 255));
+//  
+//  } else {
+//
+//    analogWrite( vu_heat.pin_out, mapfloat (temp_tec_cold.val - temp_wtr_out_pc.val, -2.5, 2.5, 0, 255));
+//
+//  }
 
   analogWrite(vu_eau.pin_out, mapfloat( temp_wtr_out_pc.val, 15, 40, 0, 255) );
   //analogWrite( vu_heat.pin_out, mapfloat (temp_wtr_out_pc.val - temp_wtr_out_pcrad.val , -2.5, 2.5, 0, 255));

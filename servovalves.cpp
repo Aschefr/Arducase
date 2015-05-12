@@ -50,13 +50,15 @@ void use_servo(struct Servovalve &servo_to_use, int cmd_value) { //se rappeler
 void open_servo(struct Servovalve &servo_to_use) {
   servo_to_use.servo_pin.attach(servo_to_use.pin_servo);
 
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(servo_to_use.name);
+  lcd.setCursor(0, 1);
+  lcd.print("Opening : ");
+
   for(int i = 0; i <= 100; i++) {
     servo_to_use.servo_pin.write( map( i, 0, 100, servo_to_use.pos_min + servo_to_use.offset, servo_to_use.pos_max + servo_to_use.offset) );
 
-    lcd.setCursor(0, 0);
-    lcd.print(servo_to_use.name);
-    lcd.setCursor(0, 1);
-    lcd.print("Opening : ");
     lcd.setCursor(10, 1);
     lcd.print("   ");
     lcd.setCursor(10, 1);
@@ -72,13 +74,15 @@ void open_servo(struct Servovalve &servo_to_use) {
 void close_servo(struct Servovalve &servo_to_use) {
   servo_to_use.servo_pin.attach(servo_to_use.pin_servo);
 
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(servo_to_use.name);
+  lcd.setCursor(0, 1);
+  lcd.print("Closing : ");
+  
   for(int i = 100; i >= 0; i--) {
     servo_to_use.servo_pin.write( map( i, 0, 100, servo_to_use.pos_min + servo_to_use.offset, servo_to_use.pos_max + servo_to_use.offset) );
 
-    lcd.setCursor(0, 0);
-    lcd.print(servo_to_use.name);
-    lcd.setCursor(0, 1);
-    lcd.print("Closing : ");
     lcd.setCursor(10, 1);
     lcd.print("   ");
     lcd.setCursor(10, 1);

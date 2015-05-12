@@ -21,6 +21,7 @@ LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
 int is_TEC_ON = 0;
 int nb_TEC_ON = 0;
 
+//=========================================================================================//
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
 
 
@@ -47,19 +48,11 @@ const int tec_pump = 52; //Sortie pour pompe refroidissement TEC face chaude.
 
 
 // ________________________________ Entrée/sortie Arduino Mega _______________________________________
-
-
-// ________________________________ Fonction gesion des temps/tempo _______________________________________
-
-//void tempo(int action, int tempo)
+//=========================================================================================//
 
 
 
-// ________________________________ Fonction gesion des temps/tempo _______________________________________
-
-
-
-
+//=========================================================================================//
 // ________________________________ Gestion caméras _______________________________________
 
 void set_camera(void) {
@@ -144,11 +137,11 @@ void set_camera(void) {
 }
 
 // ________________________________ Gestion caméras _______________________________________
+//=========================================================================================//
 
 
 
-
-
+//=========================================================================================//
 // __________ Gestion mode de fonctionnement, allumage LED et inscription LCD __________
 //
 
@@ -186,12 +179,12 @@ void set_mode (void) {
 
     } else {
 
-      if(temp_pc_case.val - temp_wtr_in_pc.val < 2 && nb_TEC_ON < nb_peltier && millis() - last_start > 10000) {
+      if(temp_pc_case.val - temp_wtr_in_pc.val < TEMP_DIFF_P_ROSE && nb_TEC_ON < nb_peltier && millis() - last_start > 10000) {
         last_start = millis();
         digitalWrite(peltiers[nb_TEC_ON]->pin_out, HIGH);
         nb_TEC_ON ++;
 
-      } else if(temp_pc_case.val - temp_wtr_in_pc.val > 3 && nb_TEC_ON > 0 && millis() - last_start > 10000) {
+      } else if(temp_pc_case.val - temp_wtr_in_pc.val > TEMP_DIFF_MAX && nb_TEC_ON > 0 && millis() - last_start > 10000) {
         last_start = millis();
         nb_TEC_ON --;
         digitalWrite(peltiers[nb_TEC_ON]->pin_out, LOW);
@@ -221,8 +214,11 @@ void set_mode (void) {
 
 }
 // __________ Gestion mode de fonctionnement, allumage LED et inscription LCD __________
+//=========================================================================================//
 
 
+//=========================================================================================//
+// ________________________Gestion mode de refroidissement auto____________________________
 
 void thermals_save (void) { //Enregistrement température en Celsius dans chaque variables
 
@@ -253,7 +249,7 @@ void thermals_save (void) { //Enregistrement température en Celsius dans chaque
       if(last_status == 0) {
         last_time = millis();
         last_status = 1;
-      } else if (millis() - last_time > 30 * 1000) {
+      } else if (millis() - last_time > WAIT_BTW_MODEAUTO_TIME * 1000) {
         mode_up();
         last_status = 0;
       }
@@ -261,7 +257,7 @@ void thermals_save (void) { //Enregistrement température en Celsius dans chaque
       if(last_status == 0) {
         last_time = millis();
         last_status = -1;
-      } else if (millis() - last_time > 30 * 1000) {
+      } else if (millis() - last_time > WAIT_BTW_MODEAUTO_TIME * 1000) {
         mode_down();
         last_status = 0;
       }
@@ -274,13 +270,18 @@ void thermals_save (void) { //Enregistrement température en Celsius dans chaque
   finish_ventilo_regulation();
 }
 
+// ________________________Gestion mode de refroidissement auto____________________________
+//=========================================================================================//
+
+
 
 //=========================================================================================//
-// ________________ Affichage des temps sur LCD avec bouton Refresh ______________________
+// ________________ Affichage des temps sur LCD avec bouton Next ______________________
+
+int screens=0; //Compteur pour changer d'écran
 
 void lcd_temp_draw (void) {
  
-  static int screens=0; //Compteur pour changer d'écran
   static int yazop = 0; //Pour fonctionnement du bouton "next" au relachement
   static int yazop2 = 0; //Pour fonctionnement du bouton "next" au relachement
 
@@ -369,9 +370,12 @@ void lcd_temp_draw (void) {
   }
 
 }
-// ________________ Affichage des temps sur LCD avec bouton Refresh ______________________
+// ________________ Affichage des temps sur LCD avec bouton Next ______________________
 //=========================================================================================//
 
+
+//=========================================================================================//
+// ________________ Screen saver (quand aucun écran n'est activé) ______________________
 
 void screen_saver() {
   lcd.clear();
@@ -398,22 +402,11 @@ void screen_saver() {
   lcd.setCursor(13, 1); //
   lcd.print(PWM_to_percent(vent_tec.curent_PWM));
 
-
-
 }
 
-// ________________ Calcul flow ______________________
-//=====================================================//
-//volatile int NbTopsFan; //measuring the rising edges of the signal
-//int Calc;                               
-//int hallsensor = 20;    //The pin location of the sensor
-// 
-//void rpm ()     //This is the function that the interupt calls 
-//{ 
-//  NbTopsFan++;  //This function measures the rising and falling edge of the 
-//} 
-//=====================================================//
-// ________________ Calcul flow ______________________
+// ________________ Screen saver (quand aucun écran n'est activé) ______________________
+//=========================================================================================//
+
 
 
 
@@ -459,10 +452,6 @@ void setup (void)
   pinMode(sw_tec, INPUT);
   pinMode(tec_pump, OUTPUT);
 
-//Flow
-//  pinMode(hallsensor, INPUT); //initializes digital pin 2 as an input
-//  Serial.begin(9600); //This is the setup function where the serial port is 
-//  attachInterrupt(3, rpm, RISING); //and the interrupt is attached
 
   // on initialise les modes et tout
   // l'ordre est important !!!!!
@@ -479,6 +468,8 @@ void setup (void)
 // _______________________________________ Setup _______________________________________
 
 
+
+
 // _______________________________________ Main Loop _______________________________________
 void loop (void) {
   set_mode();
@@ -487,19 +478,7 @@ void loop (void) {
   set_camera(); // après thermal save
   handle_cpu_mem();
 
-//Flow
-//  NbTopsFan = 0;	//Set NbTops to 0 ready for calculations
-//  sei();		//Enables interrupts
-//  delay (1000);	//Wait 1 second
-//  cli();		//Disable interrupts
-//  Calc = (NbTopsFan * 60 / 7.5); //(Pulse frequency x 60) / 7.5Q, = flow rate 
-//  Serial.print (Calc, DEC); //Prints the number calculated above
-//  Serial.print (" L/min\r\n"); //Prints "L/hour" and returns a  new line
-  
-
-
-  //digitalWrite(tec_pump, HIGH); //Allume pompe TEC
-  Serial.println(millis());
+//Serial.println(millis());
 
 }
 // _______________________________________ Main Loop _______________________________________
